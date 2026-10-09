@@ -1,0 +1,814 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PairedPunks</title>
+<style>
+  @font-face { font-family: "Fraunces"; font-weight: 900; src: url(/assets/fonts/Fraunces-900.ttf); }
+  @font-face { font-family: "Fraunces"; font-weight: 900; font-style: italic; src: url(/assets/fonts/Fraunces-Italic900.ttf); }
+  @font-face { font-family: "Big Shoulders Stencil Display"; font-weight: 800; src: url(/assets/fonts/BigShouldersStencil800.ttf); }
+  @font-face { font-family: "Alfa Slab One"; src: url(/assets/fonts/AlfaSlabOne.ttf); }
+  @font-face { font-family: "DM Sans"; font-weight: 400; src: url(/assets/fonts/DMSans-400.ttf); }
+  @font-face { font-family: "DM Sans"; font-weight: 700; src: url(/assets/fonts/DMSans-700.ttf); }
+  @font-face { font-family: "JetBrains Mono"; font-weight: 500; src: url(/assets/fonts/JetBrainsMono-500.ttf); }
+
+  /* PairedPunks brand v1: warm screen, navy keylines, peony = you, navy = partner, ivy = actions and code. */
+  :root {
+    --canvas: #F3E9D6; --cream: #FBF6EC; --navy: #1A2744; --ivy: #1F5A43; --peony: #E2849F; --khaki: #C4A27A;
+    --lawn: #3C8D5F; --blush: #F6CBD5; --stone: #E4D4B6; --pinned: #EADBC0; --muted: #5a6380;
+    --display: "Fraunces", Georgia, serif; --stencil: "Big Shoulders Stencil Display", "DM Sans", sans-serif;
+    --badge: "Alfa Slab One", Georgia, serif; --sans: "DM Sans", ui-sans-serif, system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; font: 13px/1.45 var(--sans); color: var(--navy); background: var(--canvas); display: flex; flex-direction: column; overflow: hidden; }
+  svg.i { width: 18px; height: 18px; fill: currentColor; flex: none; }
+  svg.i.sm { width: 15px; height: 15px; }
+  button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
+
+  .ib { position: relative; width: 30px; height: 30px; border-radius: 99px; display: inline-flex; align-items: center; justify-content: center; color: var(--navy); border: 2px solid transparent; }
+  .ib:hover { border-color: var(--navy); background: var(--cream); }
+  .ib.sm { width: 24px; height: 24px; border-width: 1.5px; }
+  [data-tip]:hover::after { content: attr(data-tip); position: absolute; top: calc(100% + 5px); left: 50%; transform: translateX(-50%); background: var(--navy); color: var(--cream); font: 700 11px var(--sans); padding: 3px 9px; border-radius: 99px; white-space: nowrap; z-index: 20; pointer-events: none; }
+  .tip-left[data-tip]:hover::after { left: auto; right: 0; transform: none; }
+  .tbtn, .tonal, .fbtn, .badge { white-space: nowrap; flex: none; }
+  .tbtn, .tonal, .fbtn { height: 26px; padding: 0 11px; border-radius: 99px; font: 700 12px var(--sans); display: inline-flex; align-items: center; gap: 5px; border: 2px solid var(--navy); background: var(--cream); color: var(--navy); }
+  .tbtn { border-color: transparent; background: transparent; color: var(--ivy); }
+  .tbtn:hover { border-color: var(--ivy); }
+  .tonal:hover { box-shadow: 2px 2px 0 var(--navy); transform: translate(-1px, -1px); }
+  .fbtn { background: var(--ivy); border-color: var(--ivy); color: var(--cream); }
+  .fbtn:hover { box-shadow: 2px 2px 0 var(--navy); transform: translate(-1px, -1px); }
+
+  header { height: 50px; flex: none; display: flex; align-items: center; gap: 4px; padding: 0 10px 0 14px; background: var(--cream); border-bottom: 2px solid var(--navy); position: relative; }
+  header::after { content: ""; position: absolute; left: 0; right: 0; bottom: -7px; height: 5px; background: linear-gradient(var(--ivy) 0 30%, var(--peony) 30% 70%, var(--ivy) 70%); z-index: 3; }
+  .logo { display: flex; align-items: center; }
+  .logo img { height: 30px; display: block; }
+  .proj { margin-left: 16px; height: 28px; padding: 0 10px; border: 2px solid var(--navy); border-radius: 99px; display: flex; align-items: center; gap: 6px; background: var(--canvas); }
+  .proj b { font-weight: 700; }
+  .proj span { color: var(--muted); }
+  .grow { flex: 1; }
+  .chip { height: 26px; padding: 0 10px; border-radius: 99px; display: inline-flex; align-items: center; gap: 6px; font: 700 12px var(--sans); background: var(--ivy); color: var(--cream); margin-right: 6px; }
+  .dot { width: 7px; height: 7px; background: var(--lawn); flex: none; transform: rotate(45deg); }
+  .chip .dot { background: #9fd3b2; }
+  .dot.live { background: var(--peony); animation: pulse 1.6s infinite; }
+  .dot.live.them { background: var(--navy); }
+  @keyframes pulse { 50% { opacity: .35; } }
+
+  main { flex: 1; display: flex; min-height: 0; }
+
+  aside { width: 268px; flex: none; background: var(--canvas); border-right: 2px solid var(--navy); display: flex; flex-direction: column; min-height: 0; padding-top: 6px; }
+  .seg { display: flex; margin: 10px 12px 6px; border: 2px solid var(--navy); border-radius: 99px; overflow: hidden; height: 28px; background: var(--cream); }
+  .seg button { flex: 1; font: 800 12px var(--stencil); letter-spacing: 2px; text-transform: uppercase; border-right: 2px solid var(--navy); }
+  .seg button:last-child { border-right: 0; }
+  .seg button.on { background: var(--navy); color: var(--cream); }
+  .nav { flex: 1; overflow: auto; padding: 0 8px 10px; }
+  .sec-h { display: flex; align-items: center; gap: 5px; height: 30px; padding: 0 6px; font: 800 12px var(--stencil); letter-spacing: 3px; text-transform: uppercase; color: var(--ivy); cursor: pointer; margin-top: 6px; }
+  .sec-h .cnt { margin-left: auto; font: 500 11px var(--mono); letter-spacing: 0; color: var(--muted); }
+  .sec-h .chev { transition: transform .15s; }
+  .sec:not(.closed) .chev { transform: rotate(90deg); }
+  .sec.closed .sec-b { display: none; }
+  .row { display: flex; align-items: center; gap: 8px; height: 29px; padding: 0 8px; border-radius: 7px; cursor: pointer; }
+  .row:hover { background: var(--stone); }
+  .row.on { background: var(--navy); color: var(--cream); }
+  .row.on svg.i, .row.on .m { color: var(--cream); }
+  .row .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+  .row .m { font: 500 11px var(--mono); color: var(--muted); }
+  .row svg.i { color: var(--navy); width: 16px; height: 16px; }
+  .row.code svg.i { color: var(--ivy); }
+  .row.quiet { opacity: .5; }
+  .row.indent { padding-left: 22px; }
+  .row.indent2 { padding-left: 40px; }
+  .av { width: 20px; height: 20px; border-radius: 50%; font: 900 10px var(--display); display: inline-flex; align-items: center; justify-content: center; flex: none; border: 1.5px solid var(--navy); }
+  .av.you { background: var(--peony); color: var(--navy); }
+  .av.them { background: var(--navy); color: var(--cream); }
+  .av.md { width: 28px; height: 28px; font-size: 12px; border-width: 2px; }
+  .member { display: flex; align-items: center; gap: 8px; padding: 10px 6px 2px; }
+  .member .n { font-weight: 700; }
+  .member .s { font-size: 11px; color: var(--muted); }
+  .sub-h { font: 800 11px var(--stencil); letter-spacing: 2px; text-transform: uppercase; color: var(--ivy); padding: 6px 8px 0 22px; }
+  .foot { border-top: 2px solid var(--navy); height: 42px; display: flex; align-items: center; padding: 0 8px 0 12px; gap: 8px; font-size: 12px; font-weight: 700; background: var(--cream); }
+  .stack { display: flex; }
+  .stack .av { margin-right: -5px; }
+
+  .work { flex: 1; min-width: 0; display: flex; flex-direction: column; padding-top: 6px; }
+  .tabs { height: 42px; flex: none; display: flex; align-items: center; gap: 4px; padding: 0 10px; border-bottom: 2px solid var(--navy); }
+  .tab { height: 28px; padding: 0 11px; display: flex; align-items: center; gap: 6px; font-weight: 700; border-radius: 99px; border: 2px solid transparent; }
+  .tab:hover { border-color: var(--stone); }
+  .tab.on { border-color: var(--navy); background: var(--cream); box-shadow: 3px 3px 0 var(--navy); }
+  .tab.on.you { box-shadow: 3px 3px 0 var(--peony); }
+  .tab .x { width: 16px; height: 16px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-right: -4px; }
+  .tab .x:hover { background: var(--stone); }
+  .tabs .sep { width: 2px; height: 18px; background: var(--khaki); margin: 0 6px; }
+  .pane-wrap { flex: 1; min-height: 0; display: flex; }
+  .pane { flex: 1; min-width: 0; overflow: auto; position: relative; }
+  .pane + .pane { border-left: 2px solid var(--navy); }
+  iframe.mychat { border: 0; width: 100%; height: 100%; display: block; background: var(--cream); }
+  .pane-h { position: sticky; top: 0; z-index: 2; background: var(--cream); height: 42px; display: flex; align-items: center; gap: 8px; padding: 0 12px 0 16px; border-bottom: 2px solid var(--navy); }
+  .pane-h .title { font: italic 900 16px var(--display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pane-h select { font: 700 12px var(--sans); color: var(--navy); border: 2px solid var(--navy); border-radius: 99px; height: 26px; background: var(--canvas); padding: 0 8px; max-width: 280px; }
+  .thread { max-width: 760px; margin: 0 auto; padding: 14px 22px 40px; display: flex; flex-direction: column; gap: 12px; }
+  .msg { position: relative; padding: 10px 14px; border: 2px solid var(--navy); background: var(--cream); }
+  .msg.prompt { background: var(--pinned); margin-right: 12%; }
+  .msg.prompt .who { font: 800 11px var(--stencil); letter-spacing: 2px; text-transform: uppercase; color: var(--navy); }
+  .msg.reply { border-left: 8px solid var(--navy); margin-left: 4%; }
+  .msg.reply.you { border-left-color: var(--peony); }
+  .msg .who { font-size: 12px; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+  .msg .who .ai { width: 9px; height: 9px; background: var(--navy); transform: rotate(45deg); }
+  .msg p { margin: 0 0 6px; }
+  .msg p:last-child { margin-bottom: 0; }
+  .msg .acts { position: absolute; top: 5px; right: 5px; display: none; gap: 2px; }
+  .msg:hover .acts { display: flex; }
+  .msg .acts .ib { background: var(--cream); border-color: var(--navy); }
+  code { font: 500 12px var(--mono); background: var(--canvas); padding: 1px 5px; }
+  pre { margin: 8px -14px; background: var(--navy); color: var(--cream); padding: 10px 14px; font: 500 12px/1.6 var(--mono); overflow: auto; }
+  .att { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 4px 0 10px; border: 2px solid var(--ivy); color: var(--ivy); border-radius: 99px; font: 500 12px var(--mono); margin: 4px 6px 0 0; cursor: pointer; background: var(--cream); }
+  .att:hover { background: #e6efe9; }
+  .working { color: var(--muted); font-style: italic; display: flex; align-items: center; gap: 8px; }
+  .detail { max-width: 860px; margin: 0 auto; padding: 4px 22px 40px; }
+  .detail pre { margin: 10px 0; border: 2px solid var(--navy); box-shadow: 4px 4px 0 var(--peony); }
+  .meta-line { color: var(--muted); font-size: 12px; display: flex; align-items: center; gap: 6px; padding: 12px 0 4px; }
+  .meta-line a { color: var(--ivy); font-weight: 700; text-decoration: none; border-bottom: 2px solid var(--peony); }
+  .img-ph { height: 240px; border: 2px solid var(--navy); box-shadow: 4px 4px 0 var(--navy); background: linear-gradient(90deg, rgba(226,132,159,.35) 50%, transparent 0) 0 0/28px 28px, linear-gradient(rgba(226,132,159,.35) 50%, transparent 0) 0 0/28px 28px, var(--cream); display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; font-weight: 700; }
+  .badge { font: 11px var(--badge); height: 20px; padding: 0 8px; border-radius: 4px; background: var(--stone); color: var(--navy); display: inline-flex; align-items: center; letter-spacing: .5px; }
+  .badge.live { background: var(--navy); color: var(--cream); }
+  .badge.code { background: var(--ivy); color: var(--cream); }
+
+  .scrim { position: fixed; inset: 0; background: rgba(26,39,68,.35); display: none; align-items: center; justify-content: center; z-index: 30; }
+  .scrim.open { display: flex; }
+  .dlg { background: var(--cream); border: 2px solid var(--navy); box-shadow: 8px 8px 0 var(--peony); width: 440px; max-width: calc(100vw - 32px); padding: 18px 20px 14px; }
+  .dlg h2 { font: italic 900 24px var(--display); margin: 0 0 4px; }
+  .dlg .sup { color: var(--muted); margin: 0 0 12px; }
+  .dlg pre { margin: 8px 0; }
+  .tf { display: flex; gap: 8px; margin-bottom: 10px; }
+  .tf input { flex: 1; height: 30px; border: 2px solid var(--navy); border-radius: 99px; background: var(--canvas); padding: 0 12px; font: inherit; color: var(--navy); }
+  .li { display: flex; align-items: center; gap: 10px; min-height: 40px; border-bottom: 1px dashed var(--stone); }
+  .li .grow { font-weight: 700; }
+  .li .grow small { display: block; color: var(--muted); font-size: 11px; font-weight: 400; }
+  .note { background: var(--blush); border: 2px solid var(--navy); padding: 8px 10px; font-size: 12px; margin: 12px 0 0; }
+  .dlg .acts { display: flex; justify-content: flex-end; gap: 6px; margin-top: 14px; }
+  label.ck { display: flex; align-items: center; gap: 10px; min-height: 34px; border-bottom: 1px dashed var(--stone); font-weight: 500; }
+  label.ck input { accent-color: var(--ivy); }
+  .snack { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: var(--navy); color: var(--cream); padding: 8px 16px; border-radius: 99px; font-weight: 700; font-size: 12px; box-shadow: 3px 3px 0 var(--peony); opacity: 0; transition: opacity .15s; pointer-events: none; z-index: 40; }
+  .snack.show { opacity: 1; }
+  .mocknote-unused { position: fixed; right: 10px; bottom: 10px; font: 800 11px var(--stencil); letter-spacing: 2px; text-transform: uppercase; border: 2px dashed var(--khaki); background: var(--cream); padding: 2px 8px; z-index: 5; }
+</style>
+<style>
+  .menu { position: absolute; top: 44px; left: 150px; width: 340px; background: var(--cream); border: 2px solid var(--navy); box-shadow: 6px 6px 0 var(--navy); z-index: 25; padding: 6px; display: none; }
+  .menu.open { display: block; }
+  .menu .mh { font: 800 11px var(--stencil); letter-spacing: 2px; text-transform: uppercase; color: var(--ivy); padding: 8px 8px 4px; }
+  .menu .mi { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 7px; cursor: pointer; }
+  .menu .mi:hover { background: var(--stone); }
+  .menu .mi small { color: var(--muted); margin-left: auto; font: 500 11px var(--mono); }
+  .menu .sepline { height: 2px; background: var(--stone); margin: 6px 0; }
+  .welcome { flex: 1; display: flex; align-items: center; justify-content: center; background: linear-gradient(90deg, rgba(226,132,159,.18) 50%, transparent 0) 0 0/36px 36px, linear-gradient(rgba(226,132,159,.18) 50%, transparent 0) 0 0/36px 36px, var(--canvas); }
+  .welcome .card { background: var(--cream); border: 2px solid var(--navy); box-shadow: 8px 8px 0 var(--navy); padding: 26px 28px; width: 460px; max-width: calc(100vw - 32px); }
+  .welcome h1 { font: italic 900 30px/1.1 var(--display); margin: 10px 0 6px; }
+  .welcome img { height: 70px; }
+  .field { display: flex; flex-direction: column; gap: 4px; margin: 10px 0; }
+  .field label { font: 800 11px var(--stencil); letter-spacing: 2px; text-transform: uppercase; color: var(--ivy); }
+  .field input { height: 32px; border: 2px solid var(--navy); border-radius: 99px; background: var(--canvas); padding: 0 12px; font: inherit; color: var(--navy); }
+  .empty { padding: 10px 10px; color: var(--muted); font-size: 12px; }
+  .stabs { display: flex; gap: 4px; margin-bottom: 8px; }
+  .stabs button { height: 26px; padding: 0 11px; border-radius: 99px; border: 2px solid transparent; font-weight: 700; font-size: 12px; }
+  .stabs button.on { border-color: var(--navy); background: var(--canvas); }
+  .picklist { max-height: 260px; overflow: auto; }
+  .md p { margin: 0 0 6px; white-space: pre-wrap; }
+  .chip.err { background: var(--peony); color: var(--navy); }
+  .chip.busy .dot { animation: pulse .8s infinite; }
+  .inline-img { max-width: 100%; border: 2px solid var(--navy); box-shadow: 4px 4px 0 var(--navy); margin-top: 10px; background: var(--cream); }
+  audio, video { margin-top: 10px; max-width: 100%; }
+  .loading { padding: 30px; color: var(--muted); font-style: italic; }
+  .you-pill { position: relative; height: 26px; padding: 0 10px 0 4px; border: 2px solid var(--navy); border-radius: 99px; background: var(--blush); display: inline-flex; align-items: center; gap: 6px; font: 700 12px var(--sans); margin-right: 6px; }
+  .you-pill:hover { box-shadow: 2px 2px 0 var(--navy); transform: translate(-1px, -1px); }
+  .namecard { margin: 16px 0 4px; border: 2px solid var(--navy); background: var(--blush); padding: 12px 14px; display: flex; align-items: center; gap: 12px; }
+  .namecard .lbl { font: 800 11px var(--stencil); letter-spacing: 2px; text-transform: uppercase; color: var(--navy); }
+  .namecard .handle { font: italic 900 24px var(--display); line-height: 1.1; }
+  .namecard small { display: block; color: var(--navy); font-size: 12px; }
+  a.plain { color: var(--ivy); font-weight: 700; text-decoration: none; border-bottom: 2px solid var(--peony); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="i-copy" viewBox="0 0 24 24"><path d="M9 18q-.825 0-1.412-.587Q7 16.825 7 16V4q0-.825.588-1.413Q8.175 2 9 2h9q.825 0 1.413.587Q20 3.175 20 4v12q0 .825-.587 1.413Q18.825 18 18 18Zm0-2h9V4H9v12Zm-4 6q-.825 0-1.413-.587Q3 20.825 3 20V6h2v14h11v2Z"/></symbol>
+  <symbol id="i-sync" viewBox="0 0 24 24"><path d="M4 20v-2h2.75l-.4-.35q-1.225-1.225-1.788-2.663Q4 13.55 4 12.05q0-2.775 1.663-4.938Q7.325 4.95 10 4.25v2.1Q8.2 7 7.1 8.562 6 10.125 6 12.05q0 1.125.425 2.188.425 1.062 1.325 1.962l.25.25V14h2v6Zm10-.25v-2.1q1.8-.65 2.9-2.212Q18 13.875 18 11.95q0-1.125-.425-2.188-.425-1.062-1.325-1.962L16 7.55V10h-2V4h6v2h-2.75l.4.35q1.225 1.225 1.788 2.662Q20 10.45 20 11.95q0 2.775-1.663 4.938Q16.675 19.05 14 19.75Z"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 16l-5-5 1.4-1.45 2.6 2.6V4h2v8.15l2.6-2.6L17 11Zm-6 4q-.825 0-1.412-.587Q4 18.825 4 18v-3h2v3h12v-3h2v3q0 .825-.587 1.413Q18.825 20 18 20Z"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M11 16V7.85l-2.6 2.6L7 9l5-5 5 5-1.4 1.45-2.6-2.6V16Zm-5 4q-.825 0-1.412-.587Q4 18.825 4 18v-3h2v3h12v-3h2v3q0 .825-.587 1.413Q18.825 20 18 20Z"/></symbol>
+  <symbol id="i-person-add" viewBox="0 0 24 24"><path d="M18 14v-3h-3V9h3V6h2v3h3v2h-3v3Zm-9-2q-1.65 0-2.825-1.175Q5 9.65 5 8q0-1.65 1.175-2.825Q7.35 4 9 4q1.65 0 2.825 1.175Q13 6.35 13 8q0 1.65-1.175 2.825Q10.65 12 9 12Zm-8 8v-2.8q0-.85.438-1.563.437-.712 1.162-1.087 1.55-.775 3.15-1.163Q6.35 13 9 13t4.25.387q1.6.388 3.15 1.163.725.375 1.162 1.087Q18 16.35 18 17.2V20Z"/></symbol>
+  <symbol id="i-add-chat" viewBox="0 0 24 24"><path d="M11 15h2v-3h3v-2h-3V7h-2v3H8v2h3ZM2 22V4q0-.825.588-1.413Q3.175 2 4 2h16q.825 0 1.413.587Q22 3.175 22 4v12q0 .825-.587 1.413Q20.825 18 20 18H6Z"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><path d="M12 20q-.825 0-1.412-.587Q10 18.825 10 18q0-.825.588-1.413Q11.175 16 12 16t1.413.587Q14 17.175 14 18q0 .825-.587 1.413Q12.825 20 12 20Zm0-6q-.825 0-1.412-.588Q10 12.825 10 12t.588-1.413Q11.175 10 12 10t1.413.587Q14 11.175 14 12q0 .825-.587 1.412Q12.825 14 12 14Zm0-6q-.825 0-1.412-.588Q10 6.825 10 6t.588-1.412Q11.175 4 12 4t1.413.588Q14 5.175 14 6t-.587 1.412Q12.825 8 12 8Z"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M2 22V4q0-.825.588-1.413Q3.175 2 4 2h16q.825 0 1.413.587Q22 3.175 22 4v12q0 .825-.587 1.413Q20.825 18 20 18H6Zm4-8h8v-2H6Zm0-3h12V9H6Zm0-3h12V6H6Z"/></symbol>
+  <symbol id="i-artifact" viewBox="0 0 24 24"><path d="M16.65 12.75 11.25 7.35 16.65 1.95 22.05 7.35ZM3 10.95V3.3h7.65v7.65ZM13.35 21V13.35H21V21ZM3 21V13.35h7.65V21Z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M8 18h8v-2H8Zm0-4h8v-2H8Zm-2 8q-.825 0-1.412-.587Q4 20.825 4 20V4q0-.825.588-1.413Q5.175 2 6 2h8l6 6v12q0 .825-.587 1.413Q18.825 22 18 22Zm7-13h5l-5-5Z"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M4 20q-.825 0-1.412-.587Q2 18.825 2 18V6q0-.825.588-1.412Q3.175 4 4 4h6l2 2h8q.825 0 1.413.588Q22 7.175 22 8v10q0 .825-.587 1.413Q20.825 20 20 20Z"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="M8 18l-6-6 6-6 1.425 1.425-4.6 4.6L9.4 16.6Zm8 0-1.425-1.425 4.6-4.6L14.6 7.4 16 6l6 6Z"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><path d="M5 21q-.825 0-1.413-.587Q3 19.825 3 19V5q0-.825.587-1.413Q4.175 3 5 3h14q.825 0 1.413.587Q21 4.175 21 5v14q0 .825-.587 1.413Q19.825 21 19 21Zm1-4h12l-3.75-5-3 4L9 13Z"/></symbol>
+  <symbol id="i-media" viewBox="0 0 24 24"><path d="M4 20q-.825 0-1.412-.587Q2 18.825 2 18V6q0-.825.588-1.412Q3.175 4 4 4l2 4h3L7 4h2l2 4h3l-2-4h2l2 4h3l-2-4h3q.825 0 1.413.588Q22 5.175 22 6v12q0 .825-.587 1.413Q20.825 20 20 20Z"/></symbol>
+  <symbol id="i-data" viewBox="0 0 24 24"><path d="M3 21V3h18v18Zm2-12h14V5H5Zm5 5h4v-3h-4Zm0 5h4v-3h-4Zm-5-5h3v-3H5Zm11 0h3v-3h-3ZM5 19h3v-3H5Zm11 0h3v-3h-3Z"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M8.6 18 7.2 16.6 11.8 12 7.2 7.4 8.6 6l6 6Z"/></symbol>
+  <symbol id="i-split" viewBox="0 0 24 24"><path d="M3 19V5h18v14Zm2-2h6V7H5Zm8 0h6V7h-6Z"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6.4 19 5 17.6 10.6 12 5 6.4 6.4 5 12 10.6 17.6 5 19 6.4 13.4 12 19 17.6 17.6 19 12 13.4Z"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="m12 15-5-5h10Z"/></symbol>
+</svg>
+
+<body>
+<header>
+  <div class="logo"><img src="/assets/logos/pairedpunks-lockup.svg" alt="PairedPunks"></div>
+  <button class="proj" id="proj-btn" onclick="toggleMenu()"><b id="proj-name">Projects</b><span id="proj-event"></span><svg class="i sm"><use href="#i-down"/></svg></button>
+  <div class="grow"></div>
+  <button class="you-pill" id="you-pill" style="display:none" data-tip="Copy your PairedPunks name" onclick="copyName()"></button>
+  <span class="chip" id="sync-chip" style="display:none"><span class="dot"></span><span id="sync-text"></span></span>
+  <span id="project-actions" style="display:none">
+    <button class="ib" data-tip="Sync all partner files" onclick="syncNow(true)"><svg class="i"><use href="#i-sync"/></svg></button>
+    <button class="ib" data-tip="Share chats or files" onclick="openShare()"><svg class="i"><use href="#i-upload"/></svg></button>
+    <button class="ib" data-tip="Clone to my computer" onclick="openDlg('clone')"><svg class="i"><use href="#i-download"/></svg></button>
+    <button class="ib tip-left" data-tip="Members" onclick="openMembers()"><svg class="i"><use href="#i-person-add"/></svg></button>
+  </span>
+</header>
+<div class="menu" id="menu"></div>
+
+<main id="main"></main>
+
+<div class="scrim" id="d-members"><div class="dlg">
+  <h2>Members</h2>
+  <p class="sup" id="members-sup">Only these people can see this project.</p>
+  <div class="tf"><input id="invite-login" placeholder="Partner's PairedPunks name, like @mayaok" onkeydown="if(event.key==='Enter')invite()"><button class="fbtn" onclick="invite()">Invite</button></div>
+  <div id="members-list"><div class="loading">Loading members...</div></div>
+  <p class="note">A partner's PairedPunks name is on their PairedPunks start screen and at the top of their app. They accept your invite from the project menu, under Join.</p>
+  <div class="acts"><button class="tbtn" onclick="closeDlg()">Done</button></div>
+</div></div>
+
+<div class="scrim" id="d-clone"><div class="dlg">
+  <h2>Clone to my computer</h2>
+  <p class="sup">Everything in this project, on your own drive.</p>
+  <pre id="clone-cmd"></pre>
+  <div style="display:flex;gap:6px;flex-wrap:wrap">
+    <button class="tonal" onclick="copyText(document.getElementById('clone-cmd').textContent,'Command copied.')"><svg class="i sm"><use href="#i-copy"/></svg>Copy command</button>
+    <a class="tbtn" id="zip-link" href="#" style="text-decoration:none"><svg class="i sm"><use href="#i-download"/></svg>Download zip</a>
+    <a class="tbtn" id="gh-link" href="#" target="_blank" rel="noopener" style="text-decoration:none">Open on GitHub</a>
+  </div>
+  <p class="note">The command keeps your copy updatable with <code>git pull</code>. The zip is a one-time snapshot. Your agent in Studio can already read the project at <code id="local-path"></code>.</p>
+  <div class="acts"><button class="tbtn" onclick="closeDlg()">Close</button></div>
+</div></div>
+
+<div class="scrim" id="d-share"><div class="dlg" style="width:520px">
+  <h2>Share into project</h2>
+  <p class="sup">Partners get a copy on their next sync. Shared chats stay updated each time you sync.</p>
+  <div class="stabs">
+    <button id="st-chats" class="on" onclick="shareTab('chats')">My chats</button>
+    <button id="st-files" onclick="shareTab('files')">Workspace files</button>
+    <button id="st-upload" onclick="shareTab('upload')">Upload</button>
+  </div>
+  <div id="share-body" class="picklist"></div>
+  <p class="note">Chats can contain passwords, keys or personal details. Everyone in this project will see what you share.</p>
+  <div class="acts"><button class="tbtn" onclick="closeDlg()">Cancel</button><button class="fbtn" id="share-go" onclick="doShare()">Share</button></div>
+</div></div>
+
+<div class="scrim" id="d-new"><div class="dlg">
+  <h2>Start a project</h2>
+  <p class="sup">Creates a private GitHub project only the people you invite can see.</p>
+  <div class="field"><label>Project name</label><input id="new-name" placeholder="Voice notes to tickets"></div>
+  <div class="field"><label>Event</label><input id="new-event" placeholder="Imbue Punk Hackathon, Oct 2026"></div>
+  <div class="acts"><button class="tbtn" onclick="closeDlg()">Cancel</button><button class="fbtn" id="new-go" onclick="createProject()">Start project</button></div>
+</div></div>
+
+<div class="snack" id="snack"></div>
+
+<script>
+const CHAT_LABEL = "__CHAT_LABEL__";
+const S = {
+  projects: [], slug: localStorage.getItem("pp-slug") || "", state: null, members: [], invitations: [],
+  nav: localStorage.getItem("pp-nav") || "type", active: "mine", open: [], partnerChat: {}, closed: new Set(),
+  myChatPath: "/", shareMode: "chats", syncing: false, chatCache: {}, user: null, userError: "",
+};
+const ic = (n, cls = "i") => `<svg class="${cls}"><use href="#i-${n}"/></svg>`;
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const attr = (s) => esc(s).replace(/`/g, "&#96;");
+const me = () => S.user?.login || S.state?.me?.login || "";
+const isMe = (login) => login && login.toLowerCase() === me().toLowerCase();
+const av = (login, cls = "av") => `<span class="${cls} ${isMe(login) ? "you" : "them"}" title="${attr(login)}">${esc((login || "?")[0].toUpperCase())}</span>`;
+const KIND_ICON = { code: "code", data: "data", image: "image", media: "media", file: "file" };
+
+async function call(method, url, body) {
+  const options = { method, headers: {} };
+  if (body instanceof FormData) options.body = body;
+  else if (body !== undefined) { options.body = JSON.stringify(body); options.headers["Content-Type"] = "application/json"; }
+  const response = await fetch(url, options);
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || `Something went wrong (${response.status}).`);
+  return data;
+}
+const api = (path) => `/api/projects/${encodeURIComponent(S.slug)}/${path}`;
+
+function ago(iso) {
+  if (!iso) return "";
+  const s = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (s < 60) return "now";
+  if (s < 3600) return Math.floor(s / 60) + "m";
+  if (s < 86400) return Math.floor(s / 3600) + "h";
+  return Math.floor(s / 86400) + "d";
+}
+const quiet = (iso) => iso && Date.now() - new Date(iso).getTime() > 86400000;
+const order = (a, b) => (b.live ? 1 : 0) - (a.live ? 1 : 0) || (quiet(a.when) ? 1 : 0) - (quiet(b.when) ? 1 : 0) || String(b.when || "").localeCompare(String(a.when || ""));
+
+// ---------- items: one list the sidebar organizes ----------
+function items() {
+  const st = S.state; if (!st) return [];
+  const out = [];
+  for (const c of st.chats) out.push({ id: "chat:" + c.path, type: "chat", title: c.title, who: c.author, when: c.last_activity, live: c.live, path: c.path, chatId: c.id });
+  for (const a of st.artifacts) out.push({ id: "file:" + a.path, type: "artifact", kind: a.kind, title: a.name, who: a.author, when: a.updated, path: a.path, chatId: a.chat_id });
+  for (const f of st.files) out.push({ id: "file:" + f.path, type: "file", kind: f.kind, title: f.name, who: f.author, when: f.updated, path: f.path });
+  return out;
+}
+const byId = (id) => items().find((i) => i.id === id) || treeItem(id);
+function treeItem(id) {
+  const e = S.state?.tree.find((t) => "file:" + t.path === id);
+  return e ? { id, type: "work", kind: e.kind, title: e.name, who: e.author, when: e.updated, path: e.path } : null;
+}
+const typeIcon = (it) => it.type === "chat" ? "chat" : KIND_ICON[it.kind] || "file";
+function partners() {
+  const set = new Map();
+  for (const m of S.members) if (!m.pending && !isMe(m.login)) set.set(m.login.toLowerCase(), m.login);
+  for (const c of S.state?.chats || []) if (!isMe(c.author)) set.set(c.author.toLowerCase(), c.author);
+  return [...set.values()];
+}
+
+// ---------- rendering ----------
+function render() {
+  const main = document.getElementById("main");
+  const p = S.projects.find((x) => x.slug === S.slug);
+  document.getElementById("proj-name").textContent = p ? p.name : "Projects";
+  document.getElementById("proj-event").innerHTML = p && p.event ? "&nbsp;&middot; " + esc(p.event) : "";
+  document.getElementById("project-actions").style.display = p ? "" : "none";
+  document.getElementById("sync-chip").style.display = p ? "" : "none";
+  if (!p) { main.innerHTML = welcome(); return; }
+  if (!S.state) { main.innerHTML = '<div class="loading">Opening the project...</div>'; return; }
+  if (!main.querySelector("aside")) {
+    main.innerHTML = `<aside>
+      <div class="seg"><button id="sg-type" onclick="setNav('type')">Type</button><button id="sg-people" onclick="setNav('people')">People</button><button id="sg-repo" onclick="setNav('repo')">Repo</button></div>
+      <nav class="nav" id="nav"></nav>
+      <div class="foot" id="foot"></div></aside>
+      <section class="work"><div class="tabs" id="tabs"></div><div class="pane-wrap" id="panes"></div></section>`;
+  }
+  renderNav(); renderFoot(); renderTabs(); renderPanes();
+}
+
+function welcome() {
+  const inv = S.invitations.map((i) => `<div class="li"><span class="av md them">${esc(i.from[0] || "?").toUpperCase()}</span><div class="grow">${esc(i.repo.split("/")[1].replace(/^pp-/, ""))}<small>${i.pending ? "Invited by " + esc(i.from) : "Shared with you by " + esc(i.from)}</small></div><button class="fbtn" onclick="join('${attr(i.repo)}', ${i.invitation_id || 0})">Join</button></div>`).join("");
+  return `<div class="welcome"><div class="card">
+    <img src="/assets/logos/pairedpunks-shield-mark.svg" alt="">
+    <h1>Pin your work to your partner's.</h1>
+    <p>A PairedPunks project is a private space where you and up to nine hackathon partners share AI chats, prompts, replies and files, next to the code.</p>
+    ${nameCard()}
+    <div style="display:flex;gap:8px;margin-top:14px"><button class="fbtn" onclick="openDlg('new')">Start a project</button><a class="tbtn" href="/guide" style="text-decoration:none">How to pair up</a></div>
+    ${inv ? `<div class="field" style="margin-top:18px"><label>Projects you can join</label></div>${inv}` : ""}
+  </div></div>`;
+}
+
+function nameCard() {
+  if (!S.user) return `<div class="namecard"><div><div class="lbl">Your PairedPunks name</div><small>${esc(S.userError || "Loading...")}</small></div></div>`;
+  return `<div class="namecard">${av(S.user.login, "av md")}<div style="flex:1"><div class="lbl">Your PairedPunks name</div><div class="handle">@${esc(S.user.login)}</div><small>Your GitHub username. Send it to your partner so they can add you.</small></div>
+    <button class="tonal" onclick="copyName()">${ic("copy", "i sm")}Copy</button></div>`;
+}
+function copyName() { if (S.user) copyText("@" + S.user.login, "Your PairedPunks name is copied. Send it to your partner."); }
+function renderYouPill() {
+  const pill = document.getElementById("you-pill");
+  if (!S.user) { pill.style.display = "none"; return; }
+  pill.style.display = "";
+  pill.innerHTML = `${av(S.user.login)}@${esc(S.user.login)}`;
+}
+
+function row(it, opts = {}) {
+  const on = S.active === it.id || (it.type === "chat" && S.active === "p:" + it.who && S.partnerChat[it.who] === it.path);
+  const live = it.live ? `<span class="dot live ${isMe(it.who) ? "" : "them"}"></span>` : "";
+  return `<div class="row ${on ? "on" : ""} ${quiet(it.when) && !it.live ? "quiet" : ""} ${it.kind === "code" ? "code" : ""} ${opts.indent || ""}" onclick="openItem('${attr(it.id)}')" title="${attr(it.title)}">
+    ${ic(typeIcon(it))}<span class="t">${esc(it.title)}</span>${live}<span class="m">${ago(it.when)}</span>${opts.noWho ? "" : av(it.who)}</div>`;
+}
+function section(key, label, inner, count) {
+  return `<div class="sec ${S.closed.has(key) ? "closed" : ""}"><div class="sec-h" onclick="toggleSec('${key}')">${ic("chev", "i sm chev")}${label}<span class="cnt">${count}</span></div><div class="sec-b">${inner || '<div class="empty">Nothing yet.</div>'}</div></div>`;
+}
+
+function renderNav() {
+  for (const k of ["type", "people", "repo"]) document.getElementById("sg-" + k).classList.toggle("on", k === S.nav);
+  const all = items();
+  let h = "";
+  if (S.nav === "type") {
+    for (const [t, label] of [["chat", "Chats"], ["artifact", "Artifacts"], ["file", "Files"]]) {
+      const list = all.filter((i) => i.type === t).sort(order);
+      h += section(t, label, list.map((i) => row(i)).join(""), list.length);
+    }
+    if (!all.length) h += '<div class="empty">Share a chat or a file to get started. Use the upload button at the top.</div>';
+  } else if (S.nav === "people") {
+    const people = [me(), ...partners()];
+    for (const m of S.members.filter((m) => m.pending)) people.push(m.login);
+    for (const login of people) {
+      const mine = all.filter((i) => (i.who || "").toLowerCase() === login.toLowerCase()).sort(order);
+      const pending = S.members.find((m) => m.pending && m.login === login);
+      const live = mine.some((i) => i.live);
+      h += `<div class="member">${av(login, "av md")}<div class="grow"><div class="n">${esc(login)}${isMe(login) ? " (you)" : ""}</div><div class="s">${pending ? "Invited" : live ? "Working now" : mine.length ? "Last active " + ago(mine[0].when) : "Nothing shared yet"}</div></div>${live ? `<span class="dot live ${isMe(login) ? "" : "them"}"></span>` : ""}</div>`;
+      for (const [t, label] of [["chat", "Chats"], ["artifact", "Artifacts"], ["file", "Files"]]) {
+        const list = mine.filter((i) => i.type === t);
+        if (list.length) h += `<div class="sub-h">${label}</div>` + list.map((i) => row(i, { indent: "indent", noWho: true })).join("");
+      }
+    }
+  } else {
+    const p = S.projects.find((x) => x.slug === S.slug);
+    h += `<div class="sec-h" style="cursor:default">${ic("folder", "i sm")}${esc(p.repo.split("/")[1])}<span class="cnt">main</span></div>`;
+    h += treeHtml(buildTree(S.state.tree), "", 1);
+  }
+  document.getElementById("nav").innerHTML = h;
+}
+
+function buildTree(entries) {
+  const root = { dirs: {}, files: [] };
+  for (const e of entries) {
+    const parts = e.path.split("/"); let node = root;
+    for (const part of parts.slice(0, -1)) node = node.dirs[part] = node.dirs[part] || { dirs: {}, files: [] };
+    node.files.push(e);
+  }
+  return root;
+}
+function countFiles(node) { return node.files.length + Object.values(node.dirs).reduce((n, d) => n + countFiles(d), 0); }
+function treeHtml(node, prefix, depth) {
+  let h = "";
+  const pad = (d) => `style="padding-left:${8 + d * 14}px"`;
+  for (const name of Object.keys(node.dirs).sort()) {
+    const key = "r:" + prefix + name;
+    const isClosed = S.closed.has(key) !== (depth > 1);  // top level open by default, deeper closed
+    h += `<div class="sec ${isClosed ? "closed" : ""}"><div class="row" ${pad(depth)} onclick="toggleSec('${attr(key)}')">${ic("chev", "i sm chev")}${ic("folder")}<span class="t">${esc(name)}</span><span class="m">${countFiles(node.dirs[name])}</span></div><div class="sec-b">${treeHtml(node.dirs[name], prefix + name + "/", depth + 1)}</div></div>`;
+  }
+  for (const f of node.files.sort((a, b) => a.name.localeCompare(b.name))) {
+    const id = "file:" + f.path;
+    h += `<div class="row ${S.active === id ? "on" : ""} ${f.kind === "code" ? "code" : ""}" ${pad(depth + 1)} onclick="openItem('${attr(id)}')" title="${attr(f.path)}">${ic(KIND_ICON[f.kind] || "file")}<span class="t">${esc(f.name)}</span><span class="m">${ago(f.updated)}</span>${av(f.author)}</div>`;
+  }
+  return h;
+}
+
+function renderFoot() {
+  const active = S.members.filter((m) => !m.pending);
+  document.getElementById("foot").innerHTML = `<div class="stack">${active.slice(0, 5).map((m) => av(m.login)).join("")}</div>
+    <span style="margin-left:4px">${active.length || 1} of 10 members</span><div class="grow"></div>
+    <button class="ib sm tip-left" data-tip="Members" onclick="openMembers()">${ic("person-add", "i sm")}</button>`;
+}
+
+function renderTabs() {
+  const t = (id, label, cls = "") => `<button class="tab ${S.active === id ? "on" : ""} ${cls}" onclick="setActive('${attr(id)}')">${label}</button>`;
+  let h = t("mine", `${ic("chat", "i sm")}My chat`, "you");
+  const ps = partners();
+  for (const login of ps) {
+    const live = S.state.chats.some((c) => c.author === login && c.live);
+    h += t("p:" + login, `${av(login)}${esc(login)}${live ? '<span class="dot live them"></span>' : ""}`);
+  }
+  if (ps.length) h += t("split", `${ic("split", "i sm")}Side by side`);
+  if (S.open.length) h += '<span class="sep"></span>';
+  for (const id of S.open) {
+    const it = byId(id); if (!it) continue;
+    h += `<button class="tab ${S.active === id ? "on" : ""}" onclick="setActive('${attr(id)}')">${ic(typeIcon(it), "i sm")}${esc(it.title)}<span class="x" onclick="event.stopPropagation();closeTab('${attr(id)}')">${ic("close", "i sm")}</span></button>`;
+  }
+  document.getElementById("tabs").innerHTML = h;
+}
+
+function chatOrigin() {
+  const parts = location.host.split(".");
+  if (!CHAT_LABEL || parts.length < 2) return "";
+  parts[0] = CHAT_LABEL;
+  return `${location.protocol}//${parts.join(".")}`;
+}
+function myChatPane() {
+  const origin = chatOrigin();
+  if (!origin) return `<div class="pane"><div class="loading">Your chat can't be shown here. Open it from the chat window.</div></div>`;
+  return `<div class="pane"><iframe class="mychat" id="mychat" src="${attr(origin + S.myChatPath)}" title="My chat" allow="clipboard-read; clipboard-write"></iframe></div>`;
+}
+
+function renderPanes() {
+  const panes = document.getElementById("panes");
+  const ps = partners();
+  if (S.active.startsWith("p:") && !ps.includes(S.active.slice(2))) S.active = "mine";
+  if (S.active === "split" && !ps.length) S.active = "mine";
+  if (S.active === "mine") {
+    const frame = document.getElementById("mychat");
+    if (frame && panes.children.length === 1 && frame.dataset.path === S.myChatPath) return;  // keep the live chat as it is
+    panes.innerHTML = myChatPane();
+    const f = document.getElementById("mychat"); if (f) f.dataset.path = S.myChatPath;
+  } else if (S.active.startsWith("p:")) {
+    panes.innerHTML = `<div class="pane" id="pp-partner"></div>`;
+    fillPartner(document.getElementById("pp-partner"), S.active.slice(2));
+  } else if (S.active === "split") {
+    panes.innerHTML = myChatPane() + `<div class="pane" id="pp-partner"></div>`;
+    const f = document.getElementById("mychat"); if (f) f.dataset.path = S.myChatPath;
+    fillPartner(document.getElementById("pp-partner"), S.splitWith && ps.includes(S.splitWith) ? S.splitWith : ps[0], true);
+  } else {
+    const it = byId(S.active);
+    if (!it) { S.active = "mine"; return renderPanes(); }
+    panes.innerHTML = `<div class="pane" id="pp-item"></div>`;
+    if (it.type === "chat") fillChat(document.getElementById("pp-item"), it.path, it.who, null);
+    else fillItem(document.getElementById("pp-item"), it);
+  }
+}
+
+function partnerChats(login) {
+  return S.state.chats.filter((c) => c.author === login).map((c) => ({ ...c, when: c.last_activity })).sort(order);
+}
+function fillPartner(el, login, inSplit = false) {
+  const chats = partnerChats(login);
+  if (!chats.length) { el.innerHTML = `<div class="loading">${esc(login)} hasn't shared a chat yet.</div>`; return; }
+  const cur = chats.find((c) => c.path === S.partnerChat[login]) || chats[0];
+  S.partnerChat[login] = cur.path;
+  const opts = chats.map((c) => `<option value="${attr(c.path)}" ${c.path === cur.path ? "selected" : ""}>${esc(c.title)}${c.live ? " (live)" : ""}</option>`).join("");
+  const who = inSplit && partners().length > 1
+    ? `<select onchange="S.splitWith=this.value;renderPanes()">${partners().map((p) => `<option ${p === login ? "selected" : ""}>${esc(p)}</option>`).join("")}</select>` : av(login);
+  fillChat(el, cur.path, login, `${who}<select onchange="S.partnerChat['${attr(login)}']=this.value;renderPanes();renderNav()">${opts}</select>`);
+}
+
+// ---------- chat thread ----------
+function md(text) {
+  const blocks = String(text).split(/```/);
+  return blocks.map((b, i) => {
+    if (i % 2) return `<pre>${esc(b.replace(/^[a-zA-Z0-9_+-]*\n/, ""))}</pre>`;
+    let h = esc(b).replace(/!?\[([^\]\n]*)\]\(([^)\s]+)\)/g, "$1").replace(/`([^`\n]+)`/g, "<code>$1</code>").replace(/\*\*([^*\n]+)\*\*/g, "<b>$1</b>");
+    return h.split(/\n{2,}/).filter((p) => p.trim()).map((p) => `<p>${p}</p>`).join("");
+  }).join("");
+}
+async function loadChat(path) {
+  if (!S.chatCache[path]) S.chatCache[path] = await call("GET", api("chat?path=" + encodeURIComponent(path)));
+  return S.chatCache[path];
+}
+async function fillChat(el, path, author, picker) {
+  el.innerHTML = '<div class="loading">Loading the chat...</div>';
+  let chat;
+  try { chat = await loadChat(path); } catch (e) { el.innerHTML = `<div class="loading">${esc(e.message)}</div>`; return; }
+  const meta = S.state.chats.find((c) => c.path === path) || {};
+  const name = isMe(author) ? "Your" : esc(author) + "'s";
+  const turns = (chat.turns || []).map((t, i) => {
+    const acts = `<div class="acts"><button class="ib sm" data-tip="Copy" onclick="copyTurn('${attr(path)}',${i})">${ic("copy", "i sm")}</button><button class="ib sm tip-left" data-tip="Add to my chat" onclick="draftTurn('${attr(path)}',${i})">${ic("add-chat", "i sm")}</button></div>`;
+    if (t.role === "prompt") return `<div class="msg prompt"><div class="who">Prompt by ${esc(author)}</div>${acts}<div class="md">${md(t.text)}</div></div>`;
+    return `<div class="msg reply ${isMe(author) ? "you" : ""}"><div class="who"><span class="ai" ${isMe(author) ? 'style="background:var(--peony)"' : ""}></span>${name} AI replied</div>${acts}<div class="md">${md(t.text)}</div></div>`;
+  }).join("");
+  const arts = (chat.artifacts || []).map((a) => {
+    const id = "file:" + a.path; const nm = a.path.split("/").pop();
+    return `<span class="att" onclick="openItem('${attr(id)}')">${ic(KIND_ICON[kindOf(nm)] || "file", "i sm")}${esc(nm)}</span>`;
+  }).join("");
+  el.innerHTML = `<div class="pane-h">${picker || `${av(author)}<span class="title">${esc(chat.title)}</span>`}${meta.live ? '<span class="badge live">LIVE</span>' : `<span class="badge">${ago(chat.last_activity)} ago</span>`}
+      <div class="grow"></div>
+      <button class="ib" data-tip="Copy whole chat" onclick="copyChat('${attr(path)}')">${ic("copy")}</button>
+      <a class="ib" data-tip="View original" href="${attr(api("original?path=" + encodeURIComponent(chat.raw || "")))}" target="_blank" rel="noopener">${ic("file")}</a>
+      <button class="tonal" onclick="draftChat('${attr(path)}')">${ic("add-chat", "i sm")}Continue in my chat</button>
+    </div>
+    <div class="thread">${turns || '<div class="loading">This chat has no messages yet.</div>'}
+    ${arts ? `<div class="msg reply" style="margin-left:0"><div class="who">Files from this chat</div>${arts}</div>` : ""}</div>`;
+}
+function kindOf(name) {
+  const ext = (name.split(".").pop() || "").toLowerCase();
+  if (["py","ts","tsx","js","jsx","css","html","sh","go","rs","java","rb","c","cpp","h","swift","kt","sql","toml","yaml","yml"].includes(ext)) return "code";
+  if (["json","jsonl","csv","tsv","xml"].includes(ext)) return "data";
+  if (["png","jpg","jpeg","gif","svg","webp"].includes(ext)) return "image";
+  if (["mp3","m4a","wav","ogg","mp4","mov","webm"].includes(ext)) return "media";
+  return "file";
+}
+
+// ---------- files ----------
+async function fillItem(el, it) {
+  const url = api("file?path=" + encodeURIComponent(it.path));
+  const chatLink = it.chatId ? S.state.chats.find((c) => c.id === it.chatId && c.author === it.who) : null;
+  let body;
+  if (it.kind === "image") body = `<img class="inline-img" src="${attr(url)}" alt="${attr(it.title)}">`;
+  else if (it.kind === "media") body = /\.(mp4|mov|webm)$/i.test(it.path) ? `<video controls src="${attr(url)}"></video>` : `<audio controls src="${attr(url)}"></audio>`;
+  else body = '<pre id="file-text">Loading...</pre>';
+  el.innerHTML = `<div class="pane-h">${ic(typeIcon(it))}<span class="title">${esc(it.title)}</span><span class="badge ${it.kind === "code" ? "code" : ""}">${esc((it.type === "work" ? "repo" : it.type).toUpperCase())}</span><div class="grow"></div>
+      ${["image", "media"].includes(it.kind) ? "" : `<button class="ib" data-tip="Copy contents" onclick="copyText(document.getElementById('file-text').textContent,'Copied.')">${ic("copy")}</button>`}
+      <a class="ib" data-tip="Download" href="${attr(api("download?path=" + encodeURIComponent(it.path)))}">${ic("download")}</a>
+      <button class="tonal" onclick="draftFile('${attr(it.id)}')">${ic("add-chat", "i sm")}Add to my chat</button></div>
+    <div class="detail"><div class="meta-line">${av(it.who)}${esc(it.who)} &middot; ${ago(it.when)} ago &middot; <code>${esc(it.path)}</code>${chatLink ? ` &middot; made in <a href="#" class="plain" onclick="openItem('chat:${attr(chatLink.path)}');return false">${esc(chatLink.title)}</a>` : ""}</div>${body}</div>`;
+  if (!["image", "media"].includes(it.kind)) {
+    const r = await fetch(url); const text = await r.text();
+    const target = document.getElementById("file-text");
+    if (target) target.textContent = text.length > 200000 ? text.slice(0, 200000) + "\n\n... (download to see the rest)" : text;
+  }
+}
+
+// ---------- copy and "add to my chat" ----------
+async function copyText(text, msg) {
+  try { await navigator.clipboard.writeText(text); }
+  catch { const t = document.createElement("textarea"); t.value = text; document.body.appendChild(t); t.select(); document.execCommand("copy"); t.remove(); }
+  snack(msg || "Copied.");
+}
+function chatAsText(chat) {
+  return `# ${chat.title} (${chat.author}'s chat)\n\n` + (chat.turns || []).map((t) => `## ${t.role === "prompt" ? "Prompt" : "AI reply"}\n\n${t.text}`).join("\n\n");
+}
+const projectName = () => (S.projects.find((x) => x.slug === S.slug) || {}).name || "";
+async function copyTurn(path, i) { const c = await loadChat(path); copyText(c.turns[i].text, c.turns[i].role === "prompt" ? "Prompt copied." : "Reply copied."); }
+async function copyChat(path) { copyText(chatAsText(await loadChat(path)), "Whole chat copied."); }
+async function draftTurn(path, i) {
+  const c = await loadChat(path); const t = c.turns[i];
+  const label = t.role === "prompt" ? `a prompt ${c.author} gave their AI` : `a reply ${c.author}'s AI gave`;
+  await draft(`Here's ${label} in "${c.title}", from our PairedPunks project "${projectName()}":\n\n${t.text}\n\n`);
+}
+async function draftChat(path) {
+  const c = await loadChat(path);
+  await draft(`Read ${S.state.local_path}/${path}. It's ${c.author}'s chat "${c.title}" from our PairedPunks project "${projectName()}", saved as prompts and AI replies. Let's build on it: `);
+}
+async function draftFile(id) {
+  const it = byId(id);
+  await draft(`Here's ${it.path} from our PairedPunks project "${projectName()}", shared by ${it.who}: ${S.state.local_path}/${it.path}\n\n`);
+}
+async function draft(text) {
+  try {
+    const r = await call("POST", "/api/my-chat/draft", { text });
+    S.myChatPath = r.path || "/";
+    S.active = "mine"; renderTabs(); renderNav(); renderPanes();
+    snack("Added to your chat. Edit it and send when ready.");
+  } catch (e) { copyText(text, "Copied instead: " + e.message); }
+}
+
+// ---------- navigation ----------
+function openItem(id) {
+  const it = byId(id); if (!it) return;
+  if (it.type === "chat" && !isMe(it.who)) { S.partnerChat[it.who] = it.path; S.active = "p:" + it.who; }
+  else { if (!S.open.includes(id)) S.open.push(id); S.active = id; }
+  renderNav(); renderTabs(); renderPanes();
+}
+function setActive(id) { S.active = id; renderNav(); renderTabs(); renderPanes(); }
+function closeTab(id) { S.open = S.open.filter((x) => x !== id); if (S.active === id) S.active = "mine"; renderTabs(); renderPanes(); }
+function setNav(n) { S.nav = n; localStorage.setItem("pp-nav", n); renderNav(); }
+function toggleSec(k) { S.closed.has(k) ? S.closed.delete(k) : S.closed.add(k); renderNav(); }
+
+// ---------- project menu ----------
+function toggleMenu() {
+  const m = document.getElementById("menu");
+  if (m.classList.toggle("open")) {
+    const projects = S.projects.map((p) => `<div class="mi" onclick="switchProject('${attr(p.slug)}')">${ic("folder", "i sm")}${esc(p.name)}<small>${esc(p.repo.split("/")[0])}</small></div>`).join("");
+    const inv = S.invitations.map((i) => `<div class="mi" onclick="join('${attr(i.repo)}', ${i.invitation_id || 0})">${ic("person-add", "i sm")}${esc(i.repo.split("/")[1].replace(/^pp-/, ""))}<small>${i.pending ? "invite from " : "from "}${esc(i.from)}</small></div>`).join("");
+    m.innerHTML = `<div class="mh">Your projects</div>${projects || '<div class="empty">None yet.</div>'}
+      ${inv ? `<div class="sepline"></div><div class="mh">Join</div>${inv}` : ""}
+      <div class="sepline"></div><div class="mi" onclick="toggleMenu();openDlg('new')">${ic("add-chat", "i sm")}Start a project</div>
+      <div class="mi" onclick="location.href='/guide'">${ic("file", "i sm")}How to pair up</div>`;
+    refreshInvitations().then(() => { if (m.classList.contains("open")) { m.classList.remove("open"); toggleMenu(); } });
+  }
+}
+document.addEventListener("click", (e) => { const m = document.getElementById("menu"); if (m.classList.contains("open") && !m.contains(e.target) && !document.getElementById("proj-btn").contains(e.target)) m.classList.remove("open"); });
+let invitationsLoaded = 0;
+async function refreshInvitations() {
+  if (Date.now() - invitationsLoaded < 30000) return;
+  invitationsLoaded = Date.now();
+  try { S.invitations = (await call("GET", "/api/invitations")).invitations; } catch { S.invitations = []; }
+}
+async function switchProject(slug) {
+  document.getElementById("menu").classList.remove("open");
+  S.slug = slug; localStorage.setItem("pp-slug", slug);
+  S.state = null; S.members = []; S.open = []; S.active = "mine"; S.chatCache = {}; S.partnerChat = {};
+  document.getElementById("main").innerHTML = "";
+  render(); await loadState(); syncNow(false);
+}
+async function createProject() {
+  const btn = document.getElementById("new-go"); btn.disabled = true; btn.textContent = "Starting...";
+  try {
+    const p = await call("POST", "/api/projects", { name: document.getElementById("new-name").value, event: document.getElementById("new-event").value });
+    S.projects = (await call("GET", "/api/projects")).projects;
+    closeDlg(); snack("Project started. Invite your pair next."); await switchProject(p.slug); openMembers();
+  } catch (e) { snack(e.message); }
+  btn.disabled = false; btn.textContent = "Start project";
+}
+async function join(repo, invitationId) {
+  snack("Joining...");
+  try {
+    const p = await call("POST", "/api/projects/join", { repo, invitation_id: invitationId || null });
+    S.projects = (await call("GET", "/api/projects")).projects; invitationsLoaded = 0;
+    await switchProject(p.slug); snack("Joined. Welcome to the table.");
+  } catch (e) { snack(e.message); }
+}
+
+// ---------- data loading and sync ----------
+async function loadState() {
+  if (!S.slug) return;
+  try {
+    const [st, mem] = await Promise.all([call("GET", api("state")), call("GET", api("members")).catch(() => ({ members: [] }))]);
+    S.state = st; S.members = mem.members; S.chatCache = {};
+    render(); setSyncChip();
+  } catch (e) { snack(e.message); }
+}
+function setSyncChip(error) {
+  const chip = document.getElementById("sync-chip"); const p = S.projects.find((x) => x.slug === S.slug);
+  chip.classList.toggle("err", !!error); chip.classList.toggle("busy", S.syncing);
+  document.getElementById("sync-text").textContent = error ? "Sync failed" : S.syncing ? "Syncing..." : `Synced to GitHub · ${ago(p && p.last_sync)}`;
+  chip.title = error || "";
+}
+async function syncNow(announce) {
+  if (!S.slug || S.syncing) return;
+  S.syncing = true; setSyncChip();
+  try {
+    const p = await call("POST", api("sync"));
+    S.projects = S.projects.map((x) => (x.slug === p.slug ? p : x));
+    S.syncing = false; await loadState();
+    if (announce) snack("Synced. You have your pair's latest.");
+  } catch (e) { S.syncing = false; setSyncChip(e.message); if (announce) snack(e.message); }
+}
+
+// ---------- members ----------
+async function openMembers() {
+  openDlg("members"); renderMembers();
+  try { S.members = (await call("GET", api("members"))).members; renderMembers(); renderFoot(); } catch (e) { snack(e.message); }
+}
+function renderMembers() {
+  const owner = S.members.find((m) => m.owner);
+  const iAmOwner = owner && isMe(owner.login);
+  document.getElementById("members-sup").textContent = `Only these people can see this project. ${S.members.length} of 10.`;
+  document.getElementById("members-list").innerHTML = S.members.map((m) => `<div class="li">${av(m.login, "av md")}<div class="grow">${esc(m.login)}${isMe(m.login) ? " (you)" : ""}<small>${m.owner ? "Started this project" : m.pending ? "Invite pending" : "Member"}</small></div>
+    ${iAmOwner && !m.owner ? `<button class="tbtn" onclick="removeMember('${attr(m.login)}', ${m.invitation_id || 0})">${m.pending ? "Cancel invite" : "Remove"}</button>` : ""}</div>`).join("");
+}
+async function invite() {
+  const input = document.getElementById("invite-login");
+  try { S.members = (await call("POST", api("invite"), { login: input.value })).members; input.value = ""; renderMembers(); renderFoot(); snack("Invite sent."); }
+  catch (e) { snack(e.message); }
+}
+async function removeMember(login, invitationId) {
+  try { S.members = (await call("POST", api("remove"), { login, invitation_id: invitationId || null })).members; renderMembers(); renderFoot(); }
+  catch (e) { snack(e.message); }
+}
+
+// ---------- share ----------
+function openShare() { openDlg("share"); shareTab(S.shareMode); }
+async function shareTab(mode) {
+  S.shareMode = mode;
+  for (const k of ["chats", "files", "upload"]) document.getElementById("st-" + k).classList.toggle("on", k === mode);
+  const body = document.getElementById("share-body");
+  if (mode === "chats") {
+    body.innerHTML = '<div class="loading">Loading your chats...</div>';
+    const { chats } = await call("GET", "/api/my-chats");
+    const shared = new Set(S.state.shared_chats);
+    body.innerHTML = chats.map((c) => `<label class="ck"><input type="checkbox" value="${attr(c.id)}" ${shared.has(c.id) ? "checked disabled" : ""}> <span style="flex:1">${esc(c.title)}</span>
+      ${shared.has(c.id) ? `<button class="tbtn" onclick="event.preventDefault();unshare('${attr(c.id)}')">Stop sharing</button>` : `<span style="color:var(--muted);font:500 11px var(--mono)">${ago(c.last_activity)}</span>`}</label>`).join("") || '<div class="empty">No chats yet.</div>';
+  } else if (mode === "files") {
+    body.innerHTML = `<div class="tf"><input id="wf-q" placeholder="Search files in your workspace" oninput="searchFiles()"></div><div id="wf-results"></div>`;
+    searchFiles();
+  } else {
+    body.innerHTML = `<p>Pick files from your computer.</p><input type="file" id="upload-input" multiple>`;
+  }
+}
+let searchTimer;
+function searchFiles() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(async () => {
+    const q = (document.getElementById("wf-q") || {}).value || "";
+    const { files } = await call("GET", "/api/workspace-files?q=" + encodeURIComponent(q));
+    document.getElementById("wf-results").innerHTML = files.map((f) => `<label class="ck"><input type="checkbox" value="${attr(f.path)}"> ${ic(f.is_dir ? "folder" : "file", "i sm")}<span style="flex:1;font:500 12px var(--mono)">${esc(f.path)}</span></label>`).join("") || '<div class="empty">No matching files.</div>';
+  }, 200);
+}
+async function doShare() {
+  const btn = document.getElementById("share-go"); btn.disabled = true; btn.textContent = "Sharing...";
+  try {
+    if (S.shareMode === "chats") {
+      const ids = [...document.querySelectorAll("#share-body input:checked:not(:disabled)")].map((i) => i.value);
+      if (!ids.length) throw new Error("Pick at least one chat.");
+      await call("POST", api("share-chats"), { chat_ids: ids });
+    } else if (S.shareMode === "files") {
+      const paths = [...document.querySelectorAll("#wf-results input:checked")].map((i) => i.value);
+      if (!paths.length) throw new Error("Pick at least one file.");
+      await call("POST", api("share-paths"), { paths });
+    } else {
+      const files = document.getElementById("upload-input").files;
+      if (!files.length) throw new Error("Pick at least one file.");
+      const form = new FormData(); for (const f of files) form.append("files", f);
+      await call("POST", api("upload"), form);
+    }
+    closeDlg(); S.projects = (await call("GET", "/api/projects")).projects; await loadState();
+    snack("Shared. Your pair can run it now.");
+  } catch (e) { snack(e.message); }
+  btn.disabled = false; btn.textContent = "Share";
+}
+async function unshare(chatId) {
+  try { await call("POST", api("unshare-chat"), { chat_id: chatId }); await loadState(); shareTab("chats"); snack("Stopped sharing that chat."); }
+  catch (e) { snack(e.message); }
+}
+
+// ---------- dialogs ----------
+function openDlg(n) {
+  if (n === "clone") {
+    const p = S.projects.find((x) => x.slug === S.slug);
+    document.getElementById("clone-cmd").textContent = `git clone https://github.com/${p.repo}.git`;
+    document.getElementById("zip-link").href = api("zip");
+    document.getElementById("gh-link").href = `https://github.com/${p.repo}`;
+    document.getElementById("local-path").textContent = S.state ? S.state.local_path : "";
+  }
+  document.getElementById("d-" + n).classList.add("open");
+}
+function closeDlg() { document.querySelectorAll(".scrim").forEach((s) => s.classList.remove("open")); }
+document.querySelectorAll(".scrim").forEach((s) => s.addEventListener("click", (e) => { if (e.target === s) closeDlg(); }));
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDlg(); });
+let snackTimer;
+function snack(m) { const s = document.getElementById("snack"); s.textContent = m; s.classList.add("show"); clearTimeout(snackTimer); snackTimer = setTimeout(() => s.classList.remove("show"), 3200); }
+
+// ---------- start ----------
+(async () => {
+  try { S.user = await call("GET", "/api/me"); } catch (e) { S.userError = "Connect your GitHub account to Studio to get one: " + e.message; }
+  renderYouPill();
+  try { S.projects = (await call("GET", "/api/projects")).projects; } catch (e) { snack(e.message); }
+  if (!S.projects.some((p) => p.slug === S.slug)) S.slug = S.projects[0]?.slug || "";
+  if (!S.slug) await refreshInvitations();
+  render();
+  if (S.slug) { await loadState(); syncNow(false); }
+  setInterval(() => { if (document.visibilityState === "visible") syncNow(false); }, 120000);
+  setInterval(setSyncChip, 30000);
+})();
+</script>
+<!--SHELL_PAGE_SCRIPT-->
+</body>
+</html>

@@ -1,0 +1,110 @@
+# Machine-readable manifest for this template. The sibling
+# template.md holds the prose, the Requirements list, and the two
+# append-only history logs; this file is authoritative for everything
+# below. Both are generated together -- validate_template.py fails if
+# they disagree.
+format = "v2"
+
+[template]
+slug = "pairedpunks"
+title = "PairedPunks"
+description = "Private shared project spaces for hackathon partners: share AI chats, prompts, replies and files with up to 10 people, kept in sync through a private GitHub project."
+thumbnail = "template.svg"
+version = "v1"
+
+# How this template is DERIVED from the workspace it came from. An
+# update re-runs this recipe rather than diffing two repos, which is what
+# keeps an exclusion excluded even though the thing still exists upstream.
+[recipe]
+include = ["system/apps/paired_punks", "system/supervisord.conf.d/paired-punks.conf"]
+data_include = []
+# Deliberate exclusions: paths left out that a reader might expect.
+exclude = [
+    "data/.apps/paired-punks/ -- the publisher's own PairedPunks projects (local clones, shared chats, member records); an adopter starts with none",
+    "data/brand/pairedpunks/ -- the brand-guide source folder the app's logos and palette were produced from; the finished logos ship inside the app",
+]
+# Published-version modifications: none.
+modification_rules = []
+
+# Everything an adopter must deal with before this is really theirs.
+# One list -- but each entry's KIND says how it is handled, because the
+# two are handled at different times by different mechanisms:
+#
+#   permission / secret / llm = ACTIVATION. The adopting agent acts on
+#   these FIRST and BY ITSELF, initiating each latchkey permission
+#   request and each secret request before asking the user anything.
+#   Every one of them must have a matching requires_ line in template.md
+#   and vice versa -- the validator checks that, because an adopter once
+#   never got prompted for a permission the app needed.
+#
+#   The [[requirements.secret]] entries below were AGGREGATED from the
+#   included apps' app.toml [[secrets]] and skills' SKILL.md secrets:
+#   declarations, plus every data/.secrets/<file>.env the snapshot's
+#   mcp-servers.json and supervisord programs run under. Fix a wrong one
+#   at its declaration, not here.
+#
+#   adaptation = worked through INTERACTIVELY with the user afterwards.
+#   Prose on both sides, so it is not cross-checked.
+
+# No secrets, and no LLM access: the app does not call a model.
+[requirements]
+
+[[requirements.permission]]
+scope = "github-rest-api"
+permission = "github-read-user"
+
+[[requirements.permission]]
+scope = "github-rest-api"
+permission = "github-read-repos"
+
+[[requirements.permission]]
+scope = "github-rest-api"
+permission = "github-write-repos"
+
+[[requirements.permission]]
+scope = "github-rest-api"
+permission = "github-write-all"
+
+[[requirements.permission]]
+scope = "github-git"
+permission = "github-git-read"
+
+[[requirements.permission]]
+scope = "github-git"
+permission = "github-git-write"
+
+[[requirements.adaptation]]
+summary = "no automatic chat monitoring: chats reach partners only when shared and then on each sync; nothing watches for updates (planned for v2)"
+resolution = "decide whether sync-while-open is enough, or add a background watcher that publishes chat updates"
+
+[[requirements.adaptation]]
+summary = "sync conflicts are not resolved: when two members' changes touch the same file the merge is aborted and the sync stops with a message"
+resolution = "agree on who owns which files, or add a conflict-resolution step to the sync"
+
+[[requirements.adaptation]]
+summary = "live status is approximate: a chat counts as live if it changed in the last 15 minutes"
+resolution = "keep it, or change LIVE_WINDOW_SECONDS in transcripts.py to suit the team"
+
+[[requirements.adaptation]]
+summary = "sync runs only while a PairedPunks window is open (every 2 minutes) or on the Sync button"
+resolution = "set stop_when_no_windows = false in app.toml and add a server-side timer if the team needs background sync"
+
+[[requirements.adaptation]]
+summary = "the pair-up guide tells partners to add the template from the original publisher's GitHub URL"
+resolution = "point ONBOARDING.md at the adopter's own copy if they publish or fork it"
+
+# What the included code needs INSTALLED. apt takes bare names: versions
+# are a function of the apt snapshot timestamp, so replaying names at the
+# adopter's timestamp yields versions consistent with the rest of their
+# environment. The other sources are not snapshot-pinned, so for them the
+# recorded version IS the pin (name = version).
+#
+# Nothing extra: the app shells out only to git and latchkey, both stock
+# in the workspace image.
+#
+# For an install with no package database (a URL-fetched binary, a browser),
+# ship a system/scripts/env.d/<NNNN>-<slug>-<name>.sh unit with NNNN >= 2000,
+# include it in the recipe above, and list it in env_d_units.
+[environment]
+apt = []
+env_d_units = []

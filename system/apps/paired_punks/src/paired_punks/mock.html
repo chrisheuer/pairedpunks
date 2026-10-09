@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PairedPunks</title>
+<style>
+  @font-face { font-family: "Fraunces"; font-weight: 900; src: url(/assets/fonts/Fraunces-900.ttf); }
+  @font-face { font-family: "Fraunces"; font-weight: 900; font-style: italic; src: url(/assets/fonts/Fraunces-Italic900.ttf); }
+  @font-face { font-family: "Big Shoulders Stencil Display"; font-weight: 800; src: url(/assets/fonts/BigShouldersStencil800.ttf); }
+  @font-face { font-family: "Alfa Slab One"; src: url(/assets/fonts/AlfaSlabOne.ttf); }
+  @font-face { font-family: "DM Sans"; font-weight: 400; src: url(/assets/fonts/DMSans-400.ttf); }
+  @font-face { font-family: "DM Sans"; font-weight: 700; src: url(/assets/fonts/DMSans-700.ttf); }
+  @font-face { font-family: "JetBrains Mono"; font-weight: 500; src: url(/assets/fonts/JetBrainsMono-500.ttf); }
+
+  /* PairedPunks brand v1: warm screen, navy keylines, peony = you, navy = partner, ivy = actions and code. */
+  :root {
+    --canvas: #F3E9D6; --cream: #FBF6EC; --navy: #1A2744; --ivy: #1F5A43; --peony: #E2849F; --khaki: #C4A27A;
+    --lawn: #3C8D5F; --blush: #F6CBD5; --stone: #E4D4B6; --pinned: #EADBC0; --muted: #5a6380;
+    --display: "Fraunces", Georgia, serif; --stencil: "Big Shoulders Stencil Display", "DM Sans", sans-serif;
+    --badge: "Alfa Slab One", Georgia, serif; --sans: "DM Sans", ui-sans-serif, system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; font: 13px/1.45 var(--sans); color: var(--navy); background: var(--canvas); display: flex; flex-direction: column; overflow: hidden; }
+  svg.i { width: 18px; height: 18px; fill: currentColor; flex: none; }
+  svg.i.sm { width: 15px; height: 15px; }
+  button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
+
+  .ib { position: relative; width: 30px; height: 30px; border-radius: 99px; display: inline-flex; align-items: center; justify-content: center; color: var(--navy); border: 2px solid transparent; }
+  .ib:hover { border-color: var(--navy); background: var(--cream); }
+  .ib.sm { width: 24px; height: 24px; border-width: 1.5px; }
+  [data-tip]:hover::after { content: attr(data-tip); position: absolute; top: calc(100% + 5px); left: 50%; transform: translateX(-50%); background: var(--navy); color: var(--cream); font: 700 11px var(--sans); padding: 3px 9px; border-radius: 99px; white-space: nowrap; z-index: 20; pointer-events: none; }
+  .tip-left[data-tip]:hover::after { left: auto; right: 0; transform: none; }
+  .tbtn, .tonal, .fbtn, .badge { white-space: nowrap; flex: none; }
+  .tbtn, .tonal, .fbtn { height: 26px; padding: 0 11px; border-radius: 99px; font: 700 12px var(--sans); display: inline-flex; align-items: center; gap: 5px; border: 2px solid var(--navy); background: var(--cream); color: var(--navy); }
+  .tbtn { border-color: transparent; background: transparent; color: var(--ivy); }
+  .tbtn:hover { border-color: var(--ivy); }
+  .tonal:hover { box-shadow: 2px 2px 0 var(--navy); transform: translate(-1px, -1px); }
+  .fbtn { background: var(--ivy); border-color: var(--ivy); color: var(--cream); }
+  .fbtn:hover { box-shadow: 2px 2px 0 var(--navy); transform: translate(-1px, -1px); }
+
+  header { height: 50px; flex: none; display: flex; align-items: center; gap: 4px; padding: 0 10px 0 14px; background: var(--cream); border-bottom: 2px solid var(--navy); position: relative; }
+  header::after { content: ""; position: absolute; left: 0; right: 0; bottom: -7px; height: 5px; background: linear-gradient(var(--ivy) 0 30%, var(--peony) 30% 70%, var(--ivy) 70%); z-index: 3; }
+  .logo { display: flex; align-items: center; }
+  .logo img { height: 30px; display: block; }
+  .proj { margin-left: 16px; height: 28px; padding: 0 10px; border: 2px solid var(--navy); border-radius: 99px; display: flex; align-items: center; gap: 6px; background: var(--canvas); }
+  .proj b { font-weight: 700; }
+  .proj span { color: var(--muted); }
+  .grow { flex: 1; }
+  .chip { height: 26px; padding: 0 10px; border-radius: 99px; display: inline-flex; align-items: center; gap: 6px; font: 700 12px var(--sans); background: var(--ivy); color: var(--cream); margin-right: 6px; }
+  .dot { width: 7px; height: 7px; background: var(--lawn); flex: none; transform: rotate(45deg); }
+  .chip .dot { background: #9fd3b2; }
+  .dot.live { background: var(--peony); animation: pulse 1.6s infinite; }
+  .dot.live.them { background: var(--navy); }
+  @keyframes pulse { 50% { opacity: .35; } }
+
+  main { flex: 1; display: flex; min-height: 0; }
+
+  aside { width: 268px; flex: none; background: var(--canvas); border-right: 2px solid var(--navy); display: flex; flex-direction: column; min-height: 0; padding-top: 6px; }
+  .seg { display: flex; margin: 10px 12px 6px; border: 2px solid var(--navy); border-radius: 99px; overflow: hidden; height: 28px; background: var(--cream); }
+  .seg button { flex: 1; font: 800 12px var(--stencil); letter-spacing: 2px; text-transform: uppercase; border-right: 2px solid var(--navy); }
+  .seg button:last-child { border-right: 0; }
+  .seg button.on { background: var(--navy); color: var(--cream); }
+  .nav { flex: 1; overflow: auto; padding: 0 8px 10px; }
+  .sec-h { display: flex; align-items: center; gap: 5px; height: 30px; padding: 0 6px; font: 800 12px var(--stencil); letter-spacing: 3px; text-transform: uppercase; color: var(--ivy); cursor: pointer; margin-top: 6px; }
+  .sec-h .cnt { margin-left: auto; font: 500 11px var(--mono); letter-spacing: 0; color: var(--muted); }
+  .sec-h .chev { transition: transform .15s; }
+  .sec:not(.closed) .chev { transform: rotate(90deg); }
+  .sec.closed .sec-b { display: none; }
+  .row { display: flex; align-items: center; gap: 8px; height: 29px; padding: 0 8px; border-radius: 7px; cursor: pointer; }
+  .row:hover { background: var(--stone); }
+  .row.on { background: var(--navy); color: var(--cream); }
+  .row.on svg.i, .row.on .m { color: var(--cream); }
+  .row .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+  .row .m { font: 500 11px var(--mono); color: var(--muted); }
+  .row svg.i { color: var(--navy); width: 16px; height: 16px; }
+  .row.code svg.i { color: var(--ivy); }
+  .row.quiet { opacity: .5; }
+  .row.indent { padding-left: 22px; }
+  .row.indent2 { padding-left: 40px; }
+  .av { width: 20px; height: 20px; border-radius: 50%; font: 900 10px var(--display); display: inline-flex; align-items: center; justify-content: center; flex: none; border: 1.5px solid var(--navy); }
+  .av.you { background: var(--peony); color: var(--navy); }
+  .av.them { background: var(--navy); color: var(--cream); }
+  .av.md { width: 28px; height: 28px; font-size: 12px; border-width: 2px; }
+  .member { display: flex; align-items: center; gap: 8px; padding: 10px 6px 2px; }
+  .member .n { font-weight: 700; }
+  .member .s { font-size: 11px; color: var(--muted); }
+  .sub-h { font: 800 11px var(--stencil); letter-spacing: 2px; text-transform: uppercase; color: var(--ivy); padding: 6px 8px 0 22px; }
+  .foot { border-top: 2px solid var(--navy); height: 42px; display: flex; align-items: center; padding: 0 8px 0 12px; gap: 8px; font-size: 12px; font-weight: 700; background: var(--cream); }
+  .stack { display: flex; }
+  .stack .av { margin-right: -5px; }
+
+  .work { flex: 1; min-width: 0; display: flex; flex-direction: column; padding-top: 6px; }
+  .tabs { height: 42px; flex: none; display: flex; align-items: center; gap: 4px; padding: 0 10px; border-bottom: 2px solid var(--navy); }
+  .tab { height: 28px; padding: 0 11px; display: flex; align-items: center; gap: 6px; font-weight: 700; border-radius: 99px; border: 2px solid transparent; }
+  .tab:hover { border-color: var(--stone); }
+  .tab.on { border-color: var(--navy); background: var(--cream); box-shadow: 3px 3px 0 var(--navy); }
+  .tab.on.you { box-shadow: 3px 3px 0 var(--peony); }
+  .tab .x { width: 16px; height: 16px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-right: -4px; }
+  .tab .x:hover { background: var(--stone); }
+  .tabs .sep { width: 2px; height: 18px; background: var(--khaki); margin: 0 6px; }
+  .pane-wrap { flex: 1; min-height: 0; display: flex; }
+  .pane { flex: 1; min-width: 0; overflow: auto; position: relative; }
+  .pane + .pane { border-left: 2px solid var(--navy); }
+  iframe.mychat { border: 0; width: 100%; height: 100%; display: block; background: var(--cream); }
+  .pane-h { position: sticky; top: 0; z-index: 2; background: var(--cream); height: 42px; display: flex; align-items: center; gap: 8px; padding: 0 12px 0 16px; border-bottom: 2px solid var(--navy); }
+  .pane-h .title { font: italic 900 16px var(--display); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pane-h select { font: 700 12px var(--sans); color: var(--navy); border: 2px solid var(--navy); border-radius: 99px; height: 26px; background: var(--canvas); padding: 0 8px; max-width: 280px; }
+  .thread { max-width: 760px; margin: 0 auto; padding: 14px 22px 40px; display: flex; flex-direction: column; gap: 12px; }
+  .msg { position: relative; padding: 10px 14px; border: 2px solid var(--navy); background: var(--cream); }
+  .msg.prompt { background: var(--pinned); margin-right: 12%; }
+  .msg.prompt .who { font: 800 11px var(--stencil); letter-spacing: 2px; text-transform: uppercase; color: var(--navy); }
+  .msg.reply { border-left: 8px solid var(--navy); margin-left: 4%; }
+  .msg.reply.you { border-left-color: var(--peony); }
+  .msg .who { font-size: 12px; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+  .msg .who .ai { width: 9px; height: 9px; background: var(--navy); transform: rotate(45deg); }
+  .msg p { margin: 0 0 6px; }
+  .msg p:last-child { margin-bottom: 0; }
+  .msg .acts { position: absolute; top: 5px; right: 5px; display: none; gap: 2px; }
+  .msg:hover .acts { display: flex; }
+  .msg .acts .ib { background: var(--cream); border-color: var(--navy); }
+  code { font: 500 12px var(--mono); background: var(--canvas); padding: 1px 5px; }
+  pre { margin: 8px -14px; background: var(--navy); color: var(--cream); padding: 10px 14px; font: 500 12px/1.6 var(--mono); overflow: auto; }
+  .att { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 4px 0 10px; border: 2px solid var(--ivy); color: var(--ivy); border-radius: 99px; font: 500 12px var(--mono); margin: 4px 6px 0 0; cursor: pointer; background: var(--cream); }
+  .att:hover { background: #e6efe9; }
+  .working { color: var(--muted); font-style: italic; display: flex; align-items: center; gap: 8px; }
+  .detail { max-width: 860px; margin: 0 auto; padding: 4px 22px 40px; }
+  .detail pre { margin: 10px 0; border: 2px solid var(--navy); box-shadow: 4px 4px 0 var(--peony); }
+  .meta-line { color: var(--muted); font-size: 12px; display: flex; align-items: center; gap: 6px; padding: 12px 0 4px; }
+  .meta-line a { color: var(--ivy); font-weight: 700; text-decoration: none; border-bottom: 2px solid var(--peony); }
+  .img-ph { height: 240px; border: 2px solid var(--navy); box-shadow: 4px 4px 0 var(--navy); background: linear-gradient(90deg, rgba(226,132,159,.35) 50%, transparent 0) 0 0/28px 28px, linear-gradient(rgba(226,132,159,.35) 50%, transparent 0) 0 0/28px 28px, var(--cream); display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; font-weight: 700; }
+  .badge { font: 11px var(--badge); height: 20px; padding: 0 8px; border-radius: 4px; background: var(--stone); color: var(--navy); display: inline-flex; align-items: center; letter-spacing: .5px; }
+  .badge.live { background: var(--navy); color: var(--cream); }
+  .badge.code { background: var(--ivy); color: var(--cream); }
+
+  .scrim { position: fixed; inset: 0; background: rgba(26,39,68,.35); display: none; align-items: center; justify-content: center; z-index: 30; }
+  .scrim.open { display: flex; }
+  .dlg { background: var(--cream); border: 2px solid var(--navy); box-shadow: 8px 8px 0 var(--peony); width: 440px; max-width: calc(100vw - 32px); padding: 18px 20px 14px; }
+  .dlg h2 { font: italic 900 24px var(--display); margin: 0 0 4px; }
+  .dlg .sup { color: var(--muted); margin: 0 0 12px; }
+  .dlg pre { margin: 8px 0; }
+  .tf { display: flex; gap: 8px; margin-bottom: 10px; }
+  .tf input { flex: 1; height: 30px; border: 2px solid var(--navy); border-radius: 99px; background: var(--canvas); padding: 0 12px; font: inherit; color: var(--navy); }
+  .li { display: flex; align-items: center; gap: 10px; min-height: 40px; border-bottom: 1px dashed var(--stone); }
+  .li .grow { font-weight: 700; }
+  .li .grow small { display: block; color: var(--muted); font-size: 11px; font-weight: 400; }
+  .note { background: var(--blush); border: 2px solid var(--navy); padding: 8px 10px; font-size: 12px; margin: 12px 0 0; }
+  .dlg .acts { display: flex; justify-content: flex-end; gap: 6px; margin-top: 14px; }
+  label.ck { display: flex; align-items: center; gap: 10px; min-height: 34px; border-bottom: 1px dashed var(--stone); font-weight: 500; }
+  label.ck input { accent-color: var(--ivy); }
+  .snack { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: var(--navy); color: var(--cream); padding: 8px 16px; border-radius: 99px; font-weight: 700; font-size: 12px; box-shadow: 3px 3px 0 var(--peony); opacity: 0; transition: opacity .15s; pointer-events: none; z-index: 40; }
+  .snack.show { opacity: 1; }
+  .mocknote { position: fixed; right: 10px; bottom: 10px; font: 800 11px var(--stencil); letter-spacing: 2px; text-transform: uppercase; border: 2px dashed var(--khaki); background: var(--cream); padding: 2px 8px; z-index: 5; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="i-copy" viewBox="0 0 24 24"><path d="M9 18q-.825 0-1.412-.587Q7 16.825 7 16V4q0-.825.588-1.413Q8.175 2 9 2h9q.825 0 1.413.587Q20 3.175 20 4v12q0 .825-.587 1.413Q18.825 18 18 18Zm0-2h9V4H9v12Zm-4 6q-.825 0-1.413-.587Q3 20.825 3 20V6h2v14h11v2Z"/></symbol>
+  <symbol id="i-sync" viewBox="0 0 24 24"><path d="M4 20v-2h2.75l-.4-.35q-1.225-1.225-1.788-2.663Q4 13.55 4 12.05q0-2.775 1.663-4.938Q7.325 4.95 10 4.25v2.1Q8.2 7 7.1 8.562 6 10.125 6 12.05q0 1.125.425 2.188.425 1.062 1.325 1.962l.25.25V14h2v6Zm10-.25v-2.1q1.8-.65 2.9-2.212Q18 13.875 18 11.95q0-1.125-.425-2.188-.425-1.062-1.325-1.962L16 7.55V10h-2V4h6v2h-2.75l.4.35q1.225 1.225 1.788 2.662Q20 10.45 20 11.95q0 2.775-1.663 4.938Q16.675 19.05 14 19.75Z"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 16l-5-5 1.4-1.45 2.6 2.6V4h2v8.15l2.6-2.6L17 11Zm-6 4q-.825 0-1.412-.587Q4 18.825 4 18v-3h2v3h12v-3h2v3q0 .825-.587 1.413Q18.825 20 18 20Z"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M11 16V7.85l-2.6 2.6L7 9l5-5 5 5-1.4 1.45-2.6-2.6V16Zm-5 4q-.825 0-1.412-.587Q4 18.825 4 18v-3h2v3h12v-3h2v3q0 .825-.587 1.413Q18.825 20 18 20Z"/></symbol>
+  <symbol id="i-person-add" viewBox="0 0 24 24"><path d="M18 14v-3h-3V9h3V6h2v3h3v2h-3v3Zm-9-2q-1.65 0-2.825-1.175Q5 9.65 5 8q0-1.65 1.175-2.825Q7.35 4 9 4q1.65 0 2.825 1.175Q13 6.35 13 8q0 1.65-1.175 2.825Q10.65 12 9 12Zm-8 8v-2.8q0-.85.438-1.563.437-.712 1.162-1.087 1.55-.775 3.15-1.163Q6.35 13 9 13t4.25.387q1.6.388 3.15 1.163.725.375 1.162 1.087Q18 16.35 18 17.2V20Z"/></symbol>
+  <symbol id="i-add-chat" viewBox="0 0 24 24"><path d="M11 15h2v-3h3v-2h-3V7h-2v3H8v2h3ZM2 22V4q0-.825.588-1.413Q3.175 2 4 2h16q.825 0 1.413.587Q22 3.175 22 4v12q0 .825-.587 1.413Q20.825 18 20 18H6Z"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><path d="M12 20q-.825 0-1.412-.587Q10 18.825 10 18q0-.825.588-1.413Q11.175 16 12 16t1.413.587Q14 17.175 14 18q0 .825-.587 1.413Q12.825 20 12 20Zm0-6q-.825 0-1.412-.588Q10 12.825 10 12t.588-1.413Q11.175 10 12 10t1.413.587Q14 11.175 14 12q0 .825-.587 1.412Q12.825 14 12 14Zm0-6q-.825 0-1.412-.588Q10 6.825 10 6t.588-1.412Q11.175 4 12 4t1.413.588Q14 5.175 14 6t-.587 1.412Q12.825 8 12 8Z"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M2 22V4q0-.825.588-1.413Q3.175 2 4 2h16q.825 0 1.413.587Q22 3.175 22 4v12q0 .825-.587 1.413Q20.825 18 20 18H6Zm4-8h8v-2H6Zm0-3h12V9H6Zm0-3h12V6H6Z"/></symbol>
+  <symbol id="i-artifact" viewBox="0 0 24 24"><path d="M16.65 12.75 11.25 7.35 16.65 1.95 22.05 7.35ZM3 10.95V3.3h7.65v7.65ZM13.35 21V13.35H21V21ZM3 21V13.35h7.65V21Z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M8 18h8v-2H8Zm0-4h8v-2H8Zm-2 8q-.825 0-1.412-.587Q4 20.825 4 20V4q0-.825.588-1.413Q5.175 2 6 2h8l6 6v12q0 .825-.587 1.413Q18.825 22 18 22Zm7-13h5l-5-5Z"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M4 20q-.825 0-1.412-.587Q2 18.825 2 18V6q0-.825.588-1.412Q3.175 4 4 4h6l2 2h8q.825 0 1.413.588Q22 7.175 22 8v10q0 .825-.587 1.413Q20.825 20 20 20Z"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="M8 18l-6-6 6-6 1.425 1.425-4.6 4.6L9.4 16.6Zm8 0-1.425-1.425 4.6-4.6L14.6 7.4 16 6l6 6Z"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><path d="M5 21q-.825 0-1.413-.587Q3 19.825 3 19V5q0-.825.587-1.413Q4.175 3 5 3h14q.825 0 1.413.587Q21 4.175 21 5v14q0 .825-.587 1.413Q19.825 21 19 21Zm1-4h12l-3.75-5-3 4L9 13Z"/></symbol>
+  <symbol id="i-media" viewBox="0 0 24 24"><path d="M4 20q-.825 0-1.412-.587Q2 18.825 2 18V6q0-.825.588-1.412Q3.175 4 4 4l2 4h3L7 4h2l2 4h3l-2-4h2l2 4h3l-2-4h3q.825 0 1.413.588Q22 5.175 22 6v12q0 .825-.587 1.413Q20.825 20 20 20Z"/></symbol>
+  <symbol id="i-data" viewBox="0 0 24 24"><path d="M3 21V3h18v18Zm2-12h14V5H5Zm5 5h4v-3h-4Zm0 5h4v-3h-4Zm-5-5h3v-3H5Zm11 0h3v-3h-3ZM5 19h3v-3H5Zm11 0h3v-3h-3Z"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M8.6 18 7.2 16.6 11.8 12 7.2 7.4 8.6 6l6 6Z"/></symbol>
+  <symbol id="i-split" viewBox="0 0 24 24"><path d="M3 19V5h18v14Zm2-2h6V7H5Zm8 0h6V7h-6Z"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6.4 19 5 17.6 10.6 12 5 6.4 6.4 5 12 10.6 17.6 5 19 6.4 13.4 12 19 17.6 17.6 19 12 13.4Z"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="m12 15-5-5h10Z"/></symbol>
+</svg>
+
+<header>
+  <div class="logo"><img src="/assets/logos/pairedpunks-lockup.svg" alt="PairedPunks"></div>
+  <button class="proj"><b>PairedPunks app</b><span>&nbsp;&middot; Punk Hackathon Oct 2026</span><svg class="i sm"><use href="#i-down"/></svg></button>
+  <div class="grow"></div>
+  <span class="chip"><span class="dot"></span>Synced to GitHub &middot; 2m</span>
+  <button class="ib" data-tip="Sync all partner files" onclick="snack('Synced. 4 files and 1 chat from your pair.')"><svg class="i"><use href="#i-sync"/></svg></button>
+  <button class="ib" data-tip="Share chats or files" onclick="openDlg('share')"><svg class="i"><use href="#i-upload"/></svg></button>
+  <button class="ib" data-tip="Clone to my computer" onclick="openDlg('clone')"><svg class="i"><use href="#i-download"/></svg></button>
+  <button class="ib" data-tip="Invite people" onclick="openDlg('invite')"><svg class="i"><use href="#i-person-add"/></svg></button>
+  <button class="ib tip-left" data-tip="More"><svg class="i"><use href="#i-more"/></svg></button>
+</header>
+
+<main>
+  <aside>
+    <div class="seg">
+      <button id="sg-type" class="on" onclick="setNav('type')">Type</button>
+      <button id="sg-people" onclick="setNav('people')">People</button>
+      <button id="sg-repo" onclick="setNav('repo')">Repo</button>
+    </div>
+    <nav class="nav" id="nav"></nav>
+    <div class="foot">
+      <div class="stack"><span class="av you">C</span><span class="av them">M</span><span class="av them">D</span></div>
+      <span style="margin-left:4px">3 of 10 members</span>
+      <div class="grow"></div>
+      <button class="ib sm tip-left" data-tip="Manage members" onclick="openDlg('invite')"><svg class="i sm"><use href="#i-person-add"/></svg></button>
+    </div>
+  </aside>
+
+  <section class="work">
+    <div class="tabs" id="tabs"></div>
+    <div class="pane-wrap" id="panes"></div>
+  </section>
+</main>
+
+<div class="scrim" id="d-invite"><div class="dlg">
+  <h2>Members</h2>
+  <p class="sup">Only these people can see this project. Up to 10.</p>
+  <div class="tf"><input placeholder="GitHub username"><button class="fbtn" onclick="snack('Invite sent to jules-k')">Invite</button></div>
+  <div class="li"><span class="av md you">C</span><div class="grow">Chris (you)<small>@chrisheuer &middot; owner</small></div></div>
+  <div class="li"><span class="av md them">M</span><div class="grow">Maya Okafor<small>@mayaok</small></div><button class="ib sm tip-left" data-tip="Remove"><svg class="i sm"><use href="#i-close"/></svg></button></div>
+  <div class="li"><span class="av md them">D</span><div class="grow">Dev Patel<small>@devp</small></div><button class="ib sm tip-left" data-tip="Remove"><svg class="i sm"><use href="#i-close"/></svg></button></div>
+  <div class="li"><span class="av md them">J</span><div class="grow">jules-k<small>Invite pending</small></div><button class="tbtn">Cancel</button></div>
+  <div class="acts"><button class="tbtn" onclick="closeDlg()">Done</button></div>
+</div></div>
+
+<div class="scrim" id="d-clone"><div class="dlg">
+  <h2>Clone to my computer</h2>
+  <p class="sup">Everything in this project, on your own drive.</p>
+  <pre>git clone https://github.com/chrisheuer/pp-pairedpunks-app.git</pre>
+  <div style="display:flex;gap:4px"><button class="tonal" onclick="snack('Copied')"><svg class="i sm"><use href="#i-copy"/></svg>Copy command</button><button class="tbtn" onclick="snack('Downloading zip')"><svg class="i sm"><use href="#i-download"/></svg>Download zip instead</button></div>
+  <p class="note">The command keeps your copy updatable. The zip is a one-time snapshot.</p>
+  <div class="acts"><button class="tbtn" onclick="closeDlg()">Close</button></div>
+</div></div>
+
+<div class="scrim" id="d-share"><div class="dlg">
+  <h2>Share into project</h2>
+  <p class="sup">Partners get a copy. Share again to update it.</p>
+  <label class="ck"><input type="checkbox" checked> GitHub sync for shared projects <span class="grow"></span><span class="m" style="color:var(--on-surface-var);font-size:11px">chat &middot; today</span></label>
+  <label class="ck"><input type="checkbox"> Invite flow wording <span class="grow"></span><span style="color:var(--on-surface-var);font-size:11px">chat &middot; yesterday</span></label>
+  <label class="ck"><input type="checkbox"> logos/shield-mark.svg <span class="grow"></span><span style="color:var(--on-surface-var);font-size:11px">file &middot; today</span></label>
+  <p class="note">Chats can contain passwords or personal details. All 3 members will see what you share.</p>
+  <div class="acts"><button class="tbtn" onclick="closeDlg()">Cancel</button><button class="fbtn" onclick="closeDlg();snack('Shared. Your pair can run it now.')">Share</button></div>
+</div></div>
+
+<div class="snack" id="snack"></div>
+<div class="mocknote">Mock: sample data</div>
+
+<script>
+const P = {
+  C: { name: "Chris", color: "#c0170f", you: true },
+  M: { name: "Maya", full: "Maya Okafor", color: "#2b6c8f" },
+  D: { name: "Dev", full: "Dev Patel", color: "#8a6a12" },
+};
+const ic = (n, cls = "i") => `<svg class="${cls}"><use href="#i-${n}"/></svg>`;
+const av = (k, cls = "av") => `<span class="${cls} ${P[k].you ? "you" : "them"}">${P[k].name[0]}</span>`;
+
+// Hackathon classification: chats, artifacts (things an agent produced in a chat), files (inputs people brought).
+// Sample project: the team is building PairedPunks itself.
+const ITEMS = [
+  { id: "c1", type: "chat", title: "GitHub sync for shared projects", who: "C", live: true, when: "now" },
+  { id: "c2", type: "chat", title: "Styling the self-organizing sidebar", who: "M", live: true, when: "4m" },
+  { id: "c3", type: "chat", title: "Best interface models for pair chat", who: "D", when: "25m" },
+  { id: "c4", type: "chat", title: "Sidebar density and spacing pass", who: "M", when: "1h" },
+  { id: "c5", type: "chat", title: "Button system: pills vs icon buttons", who: "D", when: "2h" },
+  { id: "c6", type: "chat", title: "Naming the side-by-side view", who: "D", when: "1d", quiet: true },
+  { id: "a1", type: "artifact", kind: "code", title: "sync.py", who: "C", when: "now", from: "c1" },
+  { id: "a2", type: "artifact", kind: "code", title: "sidebar.css", who: "M", when: "6m", from: "c2" },
+  { id: "a3", type: "artifact", kind: "code", title: "ButtonSet.tsx", who: "D", when: "30m", from: "c5" },
+  { id: "a4", type: "artifact", kind: "image", title: "layout-options.png", who: "D", when: "40m", from: "c3" },
+  { id: "a6", type: "artifact", kind: "file", title: "ui-patterns-research.md", who: "D", when: "1h", from: "c3" },
+  { id: "a7", type: "artifact", kind: "data", title: "sidebar-rules.json", who: "M", when: "1h", from: "c4" },
+  { id: "f1", type: "file", kind: "media", title: "sidebar-walkthrough.mp4", who: "M", when: "1h" },
+  { id: "f2", type: "file", kind: "file", title: "brand-guide-notes.md", who: "M", when: "2h" },
+  { id: "f3", type: "file", kind: "file", title: "pitch-notes.md", who: "C", when: "1d", quiet: true },
+];
+const KIND_ICON = { code: "code", data: "data", image: "image", media: "media", file: "file" };
+const typeIcon = (it) => it.type === "chat" ? "chat" : KIND_ICON[it.kind] || "file";
+
+// Repo view: only checked-in work products.
+const REPO = [
+  { folder: "scripts", icon: "code", files: [["sync.py", "C", "now", "a1"], ["invite.py", "C", "3h"]] },
+  { folder: "app", icon: "code", files: [["Sidebar.tsx", "M", "10m"], ["sidebar.css", "M", "6m", "a2"], ["ButtonSet.tsx", "D", "30m", "a3"]] },
+  { folder: "images", icon: "image", files: [["layout-options.png", "D", "40m", "a4"], ["shield-mark.svg", "C", "1d"]] },
+  { folder: "media", icon: "media", files: [["sidebar-walkthrough.mp4", "M", "1h", "f1"]] },
+  { folder: "data", icon: "data", files: [["sidebar-rules.json", "M", "1h", "a7"]] },
+  { folder: "docs", icon: "file", files: [["README.md", "C", "2h"], ["ui-patterns-research.md", "D", "1h", "a6"]] },
+];
+
+// Sample threads. Each turn is [kind, text, optional code, optional attachment id].
+const THREADS = {
+  c2: [
+    ["prompt", "Style the PairedPunks sidebar to the brand guide: stencil section labels in ivy, a navy fill for the selected row, a peony diamond for my live work and navy for my partner's. Keep rows short so 20 or more items fit without scrolling."],
+    ["reply", "Here's the sidebar stylesheet. Rows are 29px tall, section labels use Big Shoulders Stencil at 12px with 3px tracking, and anything untouched for a day fades to half strength and sinks to the bottom of its group.",
+      ".row { height: 29px; padding: 0 8px; border-radius: 7px; }\n.row.on { background: var(--navy); color: var(--cream); }\n.row.quiet { opacity: .5; }\n.sec-h { font: 800 12px var(--stencil); letter-spacing: 3px;\n         text-transform: uppercase; color: var(--ivy); }", "a2"],
+    ["prompt", "Dev's research says header actions should be icon buttons with tooltips. Make the hover actions on each row match that, and only show them on hover."],
+    ["working"],
+  ],
+  c4: [
+    ["prompt", "Compare three densities for the sidebar: 24px, 29px and 36px rows. Which one keeps names readable at 13px and still fits a busy project?"],
+    ["reply", "29px is the sweet spot. 24px clips the avatars and makes rows hard to hit with a trackpad. 36px only fits 14 rows on a laptop screen. I saved the rules as a small file so the app can apply them per view.", "", "a7"],
+  ],
+  c3: [
+    ["prompt", "Research the best interface models for a two-person AI pairing app. Compare chat-style threads, editor-style tabs, and a side-by-side split. What works best for jumping between my chat and my partner's?"],
+    ["reply", "Tabs with an optional split win. Tabs keep one conversation in focus and make switching to your partner a single click. The split is for the moments you are comparing answers. Threads bury the code in replies, so they work badly for this.",
+      "Model           Switching   Reading code   Screen space\nThreads         slow        poor           good\nTabs            one click   good           best\nSide by side    none        good           tight under 1200px", "a4"],
+    ["prompt", "Write that up as a short research note we can keep in the project."],
+    ["reply", "Done. The note covers the three models, the trade-offs above, and the two rules we agreed on: one primary action per pane, and secondary actions appear on hover.", "", "a6"],
+  ],
+  c5: [
+    ["prompt", "Draft a button system for PairedPunks. Which actions are pills, which are icon buttons, and which only appear on hover?"],
+    ["reply", "Three tiers. Filled ivy pills for the one action that touches the code (Share, Save to repo). Outlined pills for secondary actions (Continue in my chat). Icon buttons with tooltips for everything in the header and on hover.",
+      "export const ButtonSet = {\n  primary:   \"pill filled ivy\",     // one per pane\n  secondary: \"pill outline navy\",\n  quiet:     \"icon with tooltip\",  // header and hover\n};", "a3"],
+  ],
+  c6: [
+    ["prompt", "What should we call the view that shows my chat next to my partner's?"],
+    ["reply", "\"Side by side\" is the clearest. \"Pair view\" is cuter but people guessed it meant the people list."],
+  ],
+};
+
+const CONTENT = {
+  a1: "def sync_project(repo):\n    pull(repo)                 # partners' new chats and files\n    export_shared_chats(repo)  # my chats marked shared\n    commit_and_push(repo, \"Sync from Chris\")",
+  a2: ".row { height: 29px; padding: 0 8px; border-radius: 7px; }\n.row.on { background: var(--navy); color: var(--cream); }\n.row.quiet { opacity: .5; }\n.sec-h { font: 800 12px var(--stencil); letter-spacing: 3px;\n         text-transform: uppercase; color: var(--ivy); }",
+  a3: "export const ButtonSet = {\n  primary:   \"pill filled ivy\",     // one per pane\n  secondary: \"pill outline navy\",\n  quiet:     \"icon with tooltip\",  // header and hover\n};",
+  a6: "# Interface models for pair chat\n\nTabs with an optional side-by-side split.\n- One primary action per pane.\n- Secondary actions appear on hover.\n- Threads bury code in replies: avoid.",
+  a7: "{\n  \"row_height_px\": 29,\n  \"quiet_after_hours\": 24,\n  \"live_first\": true,\n  \"groups\": [\"Chats\", \"Artifacts\", \"Files\"]\n}",
+  f2: "# Brand notes for the sidebar\n\n- Peony is always you, navy is always your partner.\n- Ivy only for actions and anything that touches the code.\n- Stencil caps for small labels only.",
+  f3: "# Pitch\n\nPairedPunks: share your AI chats with the person you just met at the hackathon.",
+};
+
+let nav = "type";
+let open = [];            // extra tabs opened from the sidebar (item ids)
+let active = "mine";      // "mine" | "M" | "D" | "split" | item id
+const closed = new Set();
+
+function row(it, opts = {}) {
+  const on = active === it.id || (it.type === "chat" && active === it.who && partnerChat[it.who] === it.id);
+  return `<div class="row ${on ? "on" : ""} ${it.quiet ? "quiet" : ""} ${it.kind === "code" ? "code" : ""} ${opts.indent || ""}" onclick="openItem('${it.id}')" title="${it.title}">
+    ${ic(typeIcon(it))}<span class="t">${it.title}</span>
+    ${it.live ? (P[it.who].you ? '<span class="dot live"></span>' : '<span class="dot live them"></span>') : ""}<span class="m">${it.when}</span>${opts.noWho ? "" : av(it.who)}</div>`;
+}
+const order = (a, b) => (b.live ? 1 : 0) - (a.live ? 1 : 0) || (a.quiet ? 1 : 0) - (b.quiet ? 1 : 0);
+
+function section(key, label, icon, inner, count) {
+  return `<div class="sec ${closed.has(key) ? "closed" : ""}"><div class="sec-h" onclick="toggleSec('${key}')">${ic("chev", "i sm chev")}${label}<span class="cnt">${count}</span></div><div class="sec-b">${inner}</div></div>`;
+}
+
+function renderNav() {
+  let h = "";
+  if (nav === "type") {
+    for (const [t, label] of [["chat", "Chats"], ["artifact", "Artifacts"], ["file", "Files"]]) {
+      const items = ITEMS.filter((i) => i.type === t).sort(order);
+      h += section(t, label, t, items.map((i) => row(i)).join(""), items.length);
+    }
+  } else if (nav === "people") {
+    for (const k of ["C", "M", "D"]) {
+      const mine = ITEMS.filter((i) => i.who === k).sort(order);
+      const live = mine.some((i) => i.live);
+      const by = (t) => mine.filter((i) => i.type === t);
+      h += `<div class="member">${av(k, "av md")}<div class="grow"><div class="n">${P[k].full || P[k].name}${P[k].you ? " (you)" : ""}</div><div class="s">${live ? "Working now" : "Last active " + mine[0].when}</div></div>${live ? (P[k].you ? '<span class="dot live"></span>' : '<span class="dot live them"></span>') : ""}</div>`;
+      for (const [t, label] of [["chat", "Chats"], ["artifact", "Artifacts"], ["file", "Files"]]) {
+        if (by(t).length) h += `<div class="sub-h">${label}</div>` + by(t).map((i) => row(i, { indent: "indent", noWho: true })).join("");
+      }
+    }
+  } else {
+    h += `<div class="sec-h" style="cursor:default">${ic("folder", "i sm")}pp-pairedpunks-app<span class="cnt">main</span></div>`;
+    for (const f of REPO) {
+      const inner = f.files.map(([name, who, when, id]) => `<div class="row indent2 ${active === id ? "on" : ""}" onclick="${id ? `openItem('${id}')` : `snack('Opening ${name}')`}">${ic(f.icon)}<span class="t">${name}</span><span class="m">${when}</span>${av(who)}</div>`).join("");
+      h += `<div class="sec ${closed.has("r-" + f.folder) ? "closed" : ""}"><div class="row indent" onclick="toggleSec('r-${f.folder}')">${ic("chev", "i sm chev")}${ic("folder")}<span class="t">${f.folder}</span><span class="m">${f.files.length}</span></div><div class="sec-b">${inner}</div></div>`;
+    }
+  }
+  document.getElementById("nav").innerHTML = h;
+}
+
+const partnerChat = { M: "c2", D: "c3" };
+
+function threadHtml(k, id) {
+  const turns = THREADS[id] || [];
+  return turns.map(([kind, text, code, att]) => {
+    if (kind === "working") return `<div class="msg reply"><div class="working"><span class="dot live them"></span>${P[k].name}'s agent is working on this</div></div>`;
+    if (kind === "prompt") return `<div class="msg prompt"><div class="who">Prompt by ${P[k].name}</div>${msgActs("prompt")}<p>${text}</p></div>`;
+    const a = att ? ITEMS.find((i) => i.id === att) : null;
+    return `<div class="msg reply"><div class="who"><span class="ai"></span>${P[k].name}'s AI replied</div>${msgActs("reply")}<p>${text}</p>${code ? `<pre>${code}</pre>` : ""}${a ? `<span class="att" onclick="openItem('${a.id}')">${ic(typeIcon(a), "i sm")}${a.title}<button class="ib sm" data-tip="Copy" onclick="event.stopPropagation();snack('Copied ${a.title}')">${ic("copy", "i sm")}</button></span>` : ""}</div>`;
+  }).join("");
+}
+
+function renderTabs() {
+  const t = (id, label, extra = "") => `<button class="tab ${active === id ? "on" : ""}" onclick="setActive('${id}')">${label}${extra}</button>`;
+  let h = t("mine", `${ic("chat", "i sm")}My chat`).replace('class="tab on"', 'class="tab on you"');
+  h += t("M", `${av("M")}Maya`, ITEMS.some((i) => i.who === "M" && i.live) ? '<span class="dot live them"></span>' : "");
+  h += t("D", `${av("D")}Dev`);
+  h += t("split", `${ic("split", "i sm")}Side by side`);
+  if (open.length) h += '<span class="sep"></span>';
+  for (const id of open) {
+    const it = ITEMS.find((i) => i.id === id);
+    h += `<button class="tab ${active === id ? "on" : ""}" onclick="setActive('${id}')">${ic(typeIcon(it), "i sm")}${it.title}<span class="x" onclick="event.stopPropagation();closeTab('${id}')">${ic("close", "i sm")}</span></button>`;
+  }
+  document.getElementById("tabs").innerHTML = h;
+}
+
+function myChatPane() {
+  // The real chat, embedded. Falls back to a note if it cannot load here.
+  const label = "__CHAT_LABEL__";
+  const parts = location.host.split(".");
+  if (!label || parts.length < 2) return `<div class="pane"><div class="thread"><p>Your chat can't be shown here. Open it from the chat window.</p></div></div>`;
+  parts[0] = label;
+  return `<div class="pane"><iframe class="mychat" src="${location.protocol}//${parts.join(".")}/" title="My chat"></iframe></div>`;
+}
+
+const msgActs = (what) => `<div class="acts"><button class="ib sm" data-tip="Copy ${what}" onclick="snack('Copied ${what}')">${ic("copy", "i sm")}</button><button class="ib sm tip-left" data-tip="Add to my chat" onclick="snack('Added to your chat. Ship it, darling.')">${ic("add-chat", "i sm")}</button></div>`;
+
+function partnerPane(k) {
+  const chats = ITEMS.filter((i) => i.who === k && i.type === "chat");
+  const cur = ITEMS.find((i) => i.id === partnerChat[k]);
+  const opts = chats.map((c) => `<option value="${c.id}" ${c.id === cur.id ? "selected" : ""}>${c.title}${c.live ? " (live)" : ""}</option>`).join("");
+  return `<div class="pane">
+    <div class="pane-h">${av(k)}<select onchange="partnerChat['${k}']=this.value;render()">${opts}</select>${cur.live ? '<span class="badge live">LIVE</span>' : `<span class="badge">${cur.when} ago</span>`}
+      <div class="grow"></div>
+      <button class="tbtn" onclick="snack('Copied whole chat')">${ic("copy", "i sm")}Copy chat</button>
+      <button class="tonal" onclick="setActive('mine');snack('Chat attached to my chat')">${ic("add-chat", "i sm")}Continue in my chat</button>
+    </div>
+    <div class="thread">${threadHtml(k, cur.id)}
+    </div></div>`;
+}
+
+function itemPane(it) {
+  const src = it.from ? ITEMS.find((i) => i.id === it.from) : null;
+  const body = it.kind === "image" ? `<div class="img-ph">${ic("image")}&nbsp;${it.title}: tabs, threads and split view side by side</div>`
+    : it.kind === "media" ? `<div class="img-ph">${ic("media")}&nbsp;Screen recording, 1:12 &nbsp;<button class="tonal">Play</button></div>`
+    : `<pre>${CONTENT[it.id] || ""}</pre>`;
+  return `<div class="pane">
+    <div class="pane-h">${ic(typeIcon(it))}<span class="title">${it.title}</span><span class="badge ${it.kind === "code" ? "code" : ""}">${it.type.toUpperCase()}</span><div class="grow"></div>
+      <button class="ib" data-tip="Copy contents" onclick="snack('Copied ${it.title}')">${ic("copy")}</button>
+      <button class="ib" data-tip="Download" onclick="snack('Downloading ${it.title}')">${ic("download")}</button>
+      <button class="tonal" onclick="setActive('mine');snack('${it.title} attached to my chat')">${ic("add-chat", "i sm")}Add to my chat</button>
+    </div>
+    <div class="detail"><div class="meta-line">${av(it.who)}${P[it.who].full || P[it.who].name} &middot; ${it.when} ago${src ? ` &middot; made in <a href="#" onclick="openItem('${src.id}');return false">${src.title}</a>` : ""}</div>${body}</div></div>`;
+}
+
+function renderPanes() {
+  let h;
+  if (active === "mine") h = myChatPane();
+  else if (active === "M" || active === "D") h = partnerPane(active);
+  else if (active === "split") h = myChatPane() + partnerPane("M");
+  else h = itemPane(ITEMS.find((i) => i.id === active));
+  document.getElementById("panes").innerHTML = h;
+}
+
+function render() { renderNav(); renderTabs(); renderPanes(); }
+function setActive(id) { active = id; render(); }
+function openItem(id) {
+  const it = ITEMS.find((i) => i.id === id);
+  if (it.type === "chat") {
+    if (it.who === "C") { active = "mine"; }
+    else { partnerChat[it.who] = id; active = it.who; }
+  } else {
+    if (!open.includes(id)) open.push(id);
+    active = id;
+  }
+  render();
+}
+function closeTab(id) { open = open.filter((x) => x !== id); if (active === id) active = "mine"; render(); }
+function setNav(n) { nav = n; for (const k of ["type", "people", "repo"]) document.getElementById("sg-" + k).classList.toggle("on", k === n); renderNav(); }
+function toggleSec(k) { closed.has(k) ? closed.delete(k) : closed.add(k); renderNav(); }
+function openDlg(n) { document.getElementById("d-" + n).classList.add("open"); }
+function closeDlg() { document.querySelectorAll(".scrim").forEach((s) => s.classList.remove("open")); }
+document.querySelectorAll(".scrim").forEach((s) => s.addEventListener("click", (e) => { if (e.target === s) closeDlg(); }));
+let st; function snack(m) { const s = document.getElementById("snack"); s.textContent = m; s.classList.add("show"); clearTimeout(st); st = setTimeout(() => s.classList.remove("show"), 2000); }
+render();
+</script>
+<!--SHELL_PAGE_SCRIPT-->
+</body>
+</html>

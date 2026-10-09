@@ -1,52 +1,64 @@
-# Your workspace
+<p align="center">
+  <img alt="PairedPunks" src="template.svg" width="480">
+</p>
 
-This folder is your agent's home: everything it knows, everything it builds,
-and the machinery that keeps it running.
+# PairedPunks
 
-## Creations
+<p align="center">
+  <a href="https://studio.imbue.com/open?git_url=https://github.com/chrisheuer/pairedpunks"><img alt="Open in Imbue Studio" height="64" src="https://img.shields.io/badge/Open%20in%20Imbue%20Studio-D8D1C0?style=for-the-badge"></a>
+</p>
 
-Broadly, in Imbue Studio you make "creations". These can be "code" (apps, skills, and
-the services behind them) or "data" (documents, images, notes).
+Didn't work? Create a Studio workspace and paste this to your agent:
+` /use-template https://github.com/chrisheuer/pairedpunks`
 
-Imbue Studio makes this easier by defining some conventions for the common things
-you'll want to make:
+## Why you care
 
-1. an "app" - something you can open as a tab and interact with
-2. a "skill" - teaches your agent how to do work you care about. A skill that
-   is automatically run on a schedule is called an "automation" (the
-   machinery that runs them lives in `system/libs/automations/`; the weekly
-   Caretaker is the built-in example)
-3. some "data" - documents, images, notes, or data created by your apps and
-   skills
-4. some "customizations" - changes to any of the above. Everything in Imbue Studio
-   can be modified by you!
+Private shared project spaces for hackathon partners: share AI chats, prompts, replies and files with up to 10 people, kept in sync through a private GitHub project.
 
-## What's here
+At a hackathon every partner ends up with their own AI chats, prompts and generated files, and the good ideas get lost in screenshots and pasted snippets. PairedPunks puts the whole team's chats and files side by side in one private space, so you can read what your partner's agent did and build on it in your own chat.
 
-- `apps/` - Everything you can open as a tab: the built-in apps (chat, the
-  terminal, the file viewer, the browser) and the apps your agent builds for you. (A shortcut
-  to `system/apps/`.)
-- `skills/` - Everything your agent knows how to do: the built-in skills and
-  the ones it has learned for you. (A shortcut to `.agents/skills/`.)
-- `data/` - Your workspace's data: documents and project folders, files
-  you've uploaded, your agent's memories, and each app's stored data.
-- `docs/` - Guides to this workspace: what it is, how it works, and a history
-  of where it came from.
-- `system/` - The machinery that runs the workspace: the apps themselves,
-  background services, scripts, and configuration. You can look around (every
-  folder has a README), and your agent maintains it for you.
+## How to use it
 
-A few housekeeping files live alongside them:
+You and each partner need an Imbue Studio workspace and a GitHub account. The full guide is also inside the app.
 
-- `README.md` - This file.
-- `CLAUDE.md` - The standing instructions your agent follows.
-- `pyproject.toml` and `uv.lock` - The Python project definition; the tooling
-  requires them at the top level.
+**Everyone, once:**
 
-## Where things are kept safe
+1. Add this template to your Studio and approve GitHub access when asked. PairedPunks uses it to create the private project and sync it.
+2. Open **PairedPunks**. Your PairedPunks name (your GitHub username, like `@mayaok`) is on the start screen and at the top right. Click **Copy** and send it to your partners.
 
-The workspace is a git repository: code and configuration changes are
-committed as your agent works. Everything under `data/` is deliberately kept
-out of git (it can be large, personal, or both) and is protected by the
-workspace's continuous encrypted backup instead, along with the rest of the
-workspace. See `docs/` for details.
+**One person starts the project** (the primary member):
+
+1. Click **Start a project** and give it a name and the event.
+2. In **Members**, paste each partner's PairedPunks name and click **Invite** -- up to 10 people in total.
+3. Share your first chat or file with the upload button at the top.
+
+**Partners join:** open the **project menu** at the top left, and under **Join** click the project you were invited to.
+
+**Working together:**
+
+- **Your chat** is the first tab; each partner has their own tab, and **Side by side** puts your chat next to theirs.
+- The sidebar lists chats, artifacts and files by type, by person, or as the project's folder tree.
+- Hover any prompt or reply to **copy** it or **add it to your chat** as a draft.
+- **Sync** (the circling arrows) pulls in your partners' latest; it also runs every 2 minutes while the window is open.
+- **Clone to my computer** downloads the whole project.
+
+Chats can contain passwords or private details -- only share the ones you are happy for every member to read.
+
+## Ideas for making it yours
+
+- Raise or lower the 10-member cap (`MAX_MEMBERS` in `projects.py`) for a bigger team or a strict pair.
+- Add a "Summarize my partner's chat" button that turns a long partner chat into a one-paragraph catch-up.
+- Post a note to the team's Slack or Discord channel whenever someone shares a new chat.
+- Restyle it for your own event: swap the colours and logos under `static/` for your hackathon's brand.
+- Add a "submission" view that gathers the files everyone marks as final into one folder for judging.
+
+## What this is
+
+This repository is a published **Imbue Studio template**: a clean, bootable
+snapshot of what an agent built, ready to adapt into your own. It is NOT the
+generic workspace template -- it is this specific project.
+
+[`template.md`](template.md) is the full manifest -- what it is, how it
+works, what it needs to run, and what to adapt -- with the
+machine-readable half (recipe, requirements, and the environment it needs
+installed) in [`template.toml`](template.toml).
