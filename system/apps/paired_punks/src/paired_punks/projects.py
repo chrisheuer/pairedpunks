@@ -14,6 +14,7 @@ Each member writes only under their own login, so syncs rarely conflict.
 """
 
 import json
+import random
 import re
 import shutil
 import threading
@@ -28,6 +29,11 @@ MAX_MEMBERS = 10
 REPO_PREFIX = "pp-"
 FORMAT_VERSION = 1
 FILE_MAX_BYTES = 25 * 1024 * 1024
+# When a partner syncs at the same moment, their push lands between our fetch and our push. We then wait for
+# the shared copy to stop moving and go again, up to this many rounds.
+SYNC_ROUNDS = 6
+PARTNER_POLL_SECONDS = 0.75
+PARTNER_SETTLE_POLLS = 8
 
 _locks: dict[str, threading.Lock] = {}
 _locks_guard = threading.Lock()
@@ -212,9 +218,14 @@ class Store:
         self._set_shared_chats(slug, [c for c in self.shared_chats(slug) if c != chat_id])
         login = self.me()["login"]
         repo = self.repo_dir(slug)
-        for path in [repo / "chats" / login / f"{chat_id}.json", repo / "chats" / login / f"{chat_id}.events.jsonl"]:
+        chat_dir = _own_dir(repo, "chats", login)
+        for path in [chat_dir / f"{chat_id}.json", chat_dir / f"{chat_id}.events.jsonl"]:
             path.unlink(missing_ok=True)
-        shutil.rmtree(repo / "artifacts" / login / chat_id, ignore_errors=True)
+        artifacts = _own_dir(repo, "artifacts", login) / chat_id
+        if artifacts.is_symlink():
+            artifacts.unlink()
+        else:
+            shutil.rmtree(artifacts, ignore_errors=True)
 
     def _export_chat(self, slug: str, chat_id: str) -> None:
         exported = transcripts.export_chat(chat_id)
@@ -222,16 +233,20 @@ class Store:
             return
         login = self.me()["login"]
         repo = self.repo_dir(slug)
-        chat_dir = repo / "chats" / login
-        chat_dir.mkdir(parents=True, exist_ok=True)
-        artifact_root = repo / "artifacts" / login / chat_id
+        chat_dir = _own_dir(repo, "chats", login)
         artifact_records = []
         for source in exported["artifact_paths"]:
+            if not _shareable(source):
+                continue
             relative = _relative_to_workspace(source)
-            target = artifact_root / relative
-            target.parent.mkdir(parents=True, exist_ok=True)
+            target = _own_dir(repo, "artifacts", login, chat_id, *relative.parent.parts) / relative.name
+            if target.is_symlink():
+                target.unlink()
             shutil.copy2(source, target)
             artifact_records.append({"path": str(target.relative_to(repo)), "source_path": str(source)})
+        for name in (f"{chat_id}.json", f"{chat_id}.events.jsonl"):
+            if (chat_dir / name).is_symlink():
+                (chat_dir / name).unlink()
         (chat_dir / f"{chat_id}.json").write_text(json.dumps({
             "id": chat_id, "title": exported["title"], "author": login, "shared_at": _now(),
             "last_activity": exported["last_activity"], "turns": exported["turns"], "artifacts": artifact_records,
@@ -243,8 +258,9 @@ class Store:
         if len(data) > FILE_MAX_BYTES:
             raise GitHubError("That file is over 25 MB. Share something smaller.")
         safe = re.sub(r"[^A-Za-z0-9._ -]+", "_", Path(name).name).strip() or "file"
-        target = self.repo_dir(slug) / "files" / self.me()["login"] / safe
-        target.parent.mkdir(parents=True, exist_ok=True)
+        target = _own_dir(self.repo_dir(slug), "files", self.me()["login"]) / safe
+        if target.is_symlink():
+            target.unlink()
         target.write_bytes(data)
         return str(target.relative_to(self.repo_dir(slug)))
 
@@ -253,14 +269,18 @@ class Store:
         repo = self.repo_dir(slug)
         login = self.me()["login"]
         added = []
-        sources = [source] if source.is_file() else [p for p in source.rglob("*") if p.is_file() and ".git" not in p.parts]
+        if not _shareable(source):
+            raise GitHubError(f"{_relative_to_workspace(source)} is private to this workspace and can't be shared.")
+        sources = [source] if source.is_file() else [p for p in source.rglob("*")
+                                                     if p.is_file() and ".git" not in p.parts and _shareable(p)]
         total = sum(p.stat().st_size for p in sources)
         if total > 4 * FILE_MAX_BYTES:
             raise GitHubError("That folder is over 100 MB. Share something smaller.")
         for path in sources:
             relative = Path(source.name) / path.relative_to(source) if source.is_dir() else Path(source.name)
-            target = repo / "files" / login / relative
-            target.parent.mkdir(parents=True, exist_ok=True)
+            target = _own_dir(repo, "files", login, *relative.parent.parts) / relative.name
+            if target.is_symlink():
+                target.unlink()
             shutil.copy2(path, target)
             added.append(str(target.relative_to(repo)))
         return added
@@ -270,18 +290,15 @@ class Store:
         project = self.project(slug)
         repo = self.repo_dir(slug)
         url = proxy_url(project["repo"])
+        # The per-project lock is the queue for this workspace: a second sync (the timer, another window)
+        # waits here for the one in progress, then runs with whatever changed meanwhile.
         with _lock(slug):
             for chat_id in self.shared_chats(slug):
                 self._export_chat(slug, chat_id)
             git(repo, "add", "-A")
             if git(repo, "status", "--porcelain").strip():
                 git(repo, "commit", "-q", "-m", f"Sync from {self.me()['login']}")
-            git(repo, "fetch", "-q", url, "main", remote=True)
-            merged = subprocess_merge(repo)
-            if not merged:
-                raise GitHubError("Your changes and a partner's changes touch the same file. "
-                                  "Open the project on GitHub to sort it out, then sync again.")
-            git(repo, "push", "-q", url, "HEAD:main", remote=True)
+            _exchange(repo, url)
         project["last_sync"] = _now()
         self._save_project(project)
         return project
@@ -322,11 +339,68 @@ class Store:
         return _read_json(self.safe_path(slug, path)) or {}
 
     def safe_path(self, slug: str, path: str) -> Path:
+        self.project(slug)  # only a project on this workspace, never a folder named by the URL
         repo = self.repo_dir(slug).resolve()
         target = (repo / path).resolve()
         if repo not in target.parents or ".git" in target.relative_to(repo).parts:
             raise GitHubError("That file is not part of this project.")
         return target
+
+
+def _exchange(repo: Path, url: str) -> None:
+    """Pull partners' work in and push ours out, waiting our turn while a partner is mid-sync."""
+    for round_number in range(SYNC_ROUNDS):
+        git(repo, "fetch", "-q", url, "main", remote=True)
+        fetched = git(repo, "rev-parse", "FETCH_HEAD").strip()
+        if not subprocess_merge(repo):
+            raise GitHubError("Your changes and a partner's changes touch the same file. "
+                              "Open the project on GitHub to sort it out, then sync again.")
+        try:
+            git(repo, "push", "-q", url, "HEAD:main", remote=True)
+            return
+        except GitHubError:
+            if _remote_head(url) == fetched:
+                raise  # nobody else pushed: a real failure, not a partner syncing
+        # A partner pushed between our fetch and our push, so they are syncing right now.
+        _wait_for_partner(url, round_number)
+    raise GitHubError("Your partners are syncing a lot right now. Give it a minute and sync again.")
+
+
+def _remote_head(url: str) -> str:
+    line = git(None, "ls-remote", url, "refs/heads/main", remote=True).strip()
+    return line.split()[0] if line else ""
+
+
+def _wait_for_partner(url: str, round_number: int) -> None:
+    """Wait until the shared copy has stopped changing (the partner's sync finished), then a random beat more,
+    so two partners who collided don't collide again."""
+    pause = threading.Event()
+    previous = _remote_head(url)
+    for _ in range(PARTNER_SETTLE_POLLS):
+        pause.wait(PARTNER_POLL_SECONDS)
+        current = _remote_head(url)
+        if current == previous:
+            break
+        previous = current
+    pause.wait(random.uniform(0, 0.5 * (round_number + 1)))
+
+
+def _own_dir(repo: Path, *parts: str) -> Path:
+    """repo/<parts...>, created as real folders. Refuses a path a partner turned into a link: following it
+    would write outside the project (git won't follow one, but plain file writes would)."""
+    current = repo
+    for part in parts:
+        current = current / part
+        if current.is_symlink():
+            raise GitHubError(f"{current.relative_to(repo)} in this project is a link, not a folder, so PairedPunks "
+                              "won't write there. Ask your partners to remove it.")
+        current.mkdir(exist_ok=True)
+    return current
+
+
+def _shareable(path: Path) -> bool:
+    """A workspace file it's safe to copy into a project: not a link, and not private workspace state."""
+    return not path.is_symlink() and transcripts._workspace_path(str(path)) is not None
 
 
 def subprocess_merge(repo: Path) -> bool:

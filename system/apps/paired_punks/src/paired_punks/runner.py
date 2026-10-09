@@ -331,7 +331,7 @@ def api_file(slug: str) -> Response:
         response = send_file(target, mimetype="text/plain; charset=utf-8")
     else:
         response = send_file(target)
-    response.headers["Content-Security-Policy"] = "default-src 'none'; img-src 'self'; media-src 'self'; style-src 'unsafe-inline'"
+    response.headers["Content-Security-Policy"] = "default-src 'none'; img-src 'self'; media-src 'self'; style-src 'unsafe-inline'; sandbox"
     response.headers["X-Content-Type-Options"] = "nosniff"
     return response
 
@@ -365,11 +365,13 @@ def api_original(slug: str) -> Response:
 
 @app.get("/api/projects/<slug>/zip")
 def api_zip(slug: str) -> Response:
+    STORE.project(slug)
     repo = STORE.repo_dir(slug)
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
         for path in sorted(repo.rglob("*")):
-            if path.is_file() and ".git" not in path.relative_to(repo).parts:
+            # A link a partner committed would put the file it points at (on this machine) into the zip.
+            if path.is_file() and not path.is_symlink() and ".git" not in path.relative_to(repo).parts:
                 archive.write(path, Path(slug) / path.relative_to(repo))
     buffer.seek(0)
     return send_file(buffer, mimetype="application/zip", as_attachment=True, download_name=f"{slug}.zip")

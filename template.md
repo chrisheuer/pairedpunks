@@ -2,7 +2,7 @@
 title: "PairedPunks"
 description: "Private shared project spaces for hackathon partners: share AI chats, prompts, replies and files with up to 10 people, kept in sync through a private GitHub project."
 thumbnail: "template.svg"
-version: v1
+version: v2
 format: v2
 ---
 
@@ -127,6 +127,8 @@ appends one entry per version (newest last); earlier entries are never rewritten
 This is distinct from "Adaptation history" below, which is the ADOPTERS' log.
 
 ### v1 (2026-10-09) -- first release: the PairedPunks app (private shared projects for 2-10 hackathon partners, synced through private GitHub repositories) and its supervisord program.
+
+### v2 (2026-10-09) -- Safety fixes for partner-shared content (crafted file names, links committed by a partner, sandboxed file views), retry when a partner is syncing at the same moment, and a fix for the project menu freezing.
 
 ## Adaptation history
 

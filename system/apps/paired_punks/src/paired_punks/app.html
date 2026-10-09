@@ -283,6 +283,9 @@ const S = {
 const ic = (n, cls = "i") => `<svg class="${cls}"><use href="#i-${n}"/></svg>`;
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const attr = (s) => esc(s).replace(/`/g, "&#96;");
+// A value passed to an inline handler: a JS string literal, then escaped for the attribute it sits in.
+// (attr alone is not enough there: the browser decodes &#39; back to a quote before running the handler.)
+const js = (s) => attr(JSON.stringify(String(s ?? "")));
 const me = () => S.user?.login || S.state?.me?.login || "";
 const isMe = (login) => login && login.toLowerCase() === me().toLowerCase();
 const av = (login, cls = "av") => `<span class="${cls} ${isMe(login) ? "you" : "them"}" title="${attr(login)}">${esc((login || "?")[0].toUpperCase())}</span>`;
@@ -353,7 +356,7 @@ function render() {
 }
 
 function welcome() {
-  const inv = S.invitations.map((i) => `<div class="li"><span class="av md them">${esc(i.from[0] || "?").toUpperCase()}</span><div class="grow">${esc(i.repo.split("/")[1].replace(/^pp-/, ""))}<small>${i.pending ? "Invited by " + esc(i.from) : "Shared with you by " + esc(i.from)}</small></div><button class="fbtn" onclick="join('${attr(i.repo)}', ${i.invitation_id || 0})">Join</button></div>`).join("");
+  const inv = S.invitations.map((i) => `<div class="li"><span class="av md them">${esc(i.from[0] || "?").toUpperCase()}</span><div class="grow">${esc(i.repo.split("/")[1].replace(/^pp-/, ""))}<small>${i.pending ? "Invited by " + esc(i.from) : "Shared with you by " + esc(i.from)}</small></div><button class="fbtn" onclick="join(${js(i.repo)}, ${Number(i.invitation_id) || 0})">Join</button></div>`).join("");
   return `<div class="welcome"><div class="card">
     <img src="/assets/logos/pairedpunks-shield-mark.svg" alt="">
     <h1>Pin your work to your partner's.</h1>
@@ -380,7 +383,7 @@ function renderYouPill() {
 function row(it, opts = {}) {
   const on = S.active === it.id || (it.type === "chat" && S.active === "p:" + it.who && S.partnerChat[it.who] === it.path);
   const live = it.live ? `<span class="dot live ${isMe(it.who) ? "" : "them"}"></span>` : "";
-  return `<div class="row ${on ? "on" : ""} ${quiet(it.when) && !it.live ? "quiet" : ""} ${it.kind === "code" ? "code" : ""} ${opts.indent || ""}" onclick="openItem('${attr(it.id)}')" title="${attr(it.title)}">
+  return `<div class="row ${on ? "on" : ""} ${quiet(it.when) && !it.live ? "quiet" : ""} ${it.kind === "code" ? "code" : ""} ${opts.indent || ""}" onclick="openItem(${js(it.id)})" title="${attr(it.title)}">
     ${ic(typeIcon(it))}<span class="t">${esc(it.title)}</span>${live}<span class="m">${ago(it.when)}</span>${opts.noWho ? "" : av(it.who)}</div>`;
 }
 function section(key, label, inner, count) {
@@ -434,11 +437,11 @@ function treeHtml(node, prefix, depth) {
   for (const name of Object.keys(node.dirs).sort()) {
     const key = "r:" + prefix + name;
     const isClosed = S.closed.has(key) !== (depth > 1);  // top level open by default, deeper closed
-    h += `<div class="sec ${isClosed ? "closed" : ""}"><div class="row" ${pad(depth)} onclick="toggleSec('${attr(key)}')">${ic("chev", "i sm chev")}${ic("folder")}<span class="t">${esc(name)}</span><span class="m">${countFiles(node.dirs[name])}</span></div><div class="sec-b">${treeHtml(node.dirs[name], prefix + name + "/", depth + 1)}</div></div>`;
+    h += `<div class="sec ${isClosed ? "closed" : ""}"><div class="row" ${pad(depth)} onclick="toggleSec(${js(key)})">${ic("chev", "i sm chev")}${ic("folder")}<span class="t">${esc(name)}</span><span class="m">${countFiles(node.dirs[name])}</span></div><div class="sec-b">${treeHtml(node.dirs[name], prefix + name + "/", depth + 1)}</div></div>`;
   }
   for (const f of node.files.sort((a, b) => a.name.localeCompare(b.name))) {
     const id = "file:" + f.path;
-    h += `<div class="row ${S.active === id ? "on" : ""} ${f.kind === "code" ? "code" : ""}" ${pad(depth + 1)} onclick="openItem('${attr(id)}')" title="${attr(f.path)}">${ic(KIND_ICON[f.kind] || "file")}<span class="t">${esc(f.name)}</span><span class="m">${ago(f.updated)}</span>${av(f.author)}</div>`;
+    h += `<div class="row ${S.active === id ? "on" : ""} ${f.kind === "code" ? "code" : ""}" ${pad(depth + 1)} onclick="openItem(${js(id)})" title="${attr(f.path)}">${ic(KIND_ICON[f.kind] || "file")}<span class="t">${esc(f.name)}</span><span class="m">${ago(f.updated)}</span>${av(f.author)}</div>`;
   }
   return h;
 }
@@ -451,7 +454,7 @@ function renderFoot() {
 }
 
 function renderTabs() {
-  const t = (id, label, cls = "") => `<button class="tab ${S.active === id ? "on" : ""} ${cls}" onclick="setActive('${attr(id)}')">${label}</button>`;
+  const t = (id, label, cls = "") => `<button class="tab ${S.active === id ? "on" : ""} ${cls}" onclick="setActive(${js(id)})">${label}</button>`;
   let h = t("mine", `${ic("chat", "i sm")}My chat`, "you");
   const ps = partners();
   for (const login of ps) {
@@ -462,7 +465,7 @@ function renderTabs() {
   if (S.open.length) h += '<span class="sep"></span>';
   for (const id of S.open) {
     const it = byId(id); if (!it) continue;
-    h += `<button class="tab ${S.active === id ? "on" : ""}" onclick="setActive('${attr(id)}')">${ic(typeIcon(it), "i sm")}${esc(it.title)}<span class="x" onclick="event.stopPropagation();closeTab('${attr(id)}')">${ic("close", "i sm")}</span></button>`;
+    h += `<button class="tab ${S.active === id ? "on" : ""}" onclick="setActive(${js(id)})">${ic(typeIcon(it), "i sm")}${esc(it.title)}<span class="x" onclick="event.stopPropagation();closeTab(${js(id)})">${ic("close", "i sm")}</span></button>`;
   }
   document.getElementById("tabs").innerHTML = h;
 }
@@ -516,7 +519,7 @@ function fillPartner(el, login, inSplit = false) {
   const opts = chats.map((c) => `<option value="${attr(c.path)}" ${c.path === cur.path ? "selected" : ""}>${esc(c.title)}${c.live ? " (live)" : ""}</option>`).join("");
   const who = inSplit && partners().length > 1
     ? `<select onchange="S.splitWith=this.value;renderPanes()">${partners().map((p) => `<option ${p === login ? "selected" : ""}>${esc(p)}</option>`).join("")}</select>` : av(login);
-  fillChat(el, cur.path, login, `${who}<select onchange="S.partnerChat['${attr(login)}']=this.value;renderPanes();renderNav()">${opts}</select>`);
+  fillChat(el, cur.path, login, `${who}<select onchange="S.partnerChat[${js(login)}]=this.value;renderPanes();renderNav()">${opts}</select>`);
 }
 
 // ---------- chat thread ----------
@@ -539,19 +542,19 @@ async function fillChat(el, path, author, picker) {
   const meta = S.state.chats.find((c) => c.path === path) || {};
   const name = isMe(author) ? "Your" : esc(author) + "'s";
   const turns = (chat.turns || []).map((t, i) => {
-    const acts = `<div class="acts"><button class="ib sm" data-tip="Copy" onclick="copyTurn('${attr(path)}',${i})">${ic("copy", "i sm")}</button><button class="ib sm tip-left" data-tip="Add to my chat" onclick="draftTurn('${attr(path)}',${i})">${ic("add-chat", "i sm")}</button></div>`;
+    const acts = `<div class="acts"><button class="ib sm" data-tip="Copy" onclick="copyTurn(${js(path)},${i})">${ic("copy", "i sm")}</button><button class="ib sm tip-left" data-tip="Add to my chat" onclick="draftTurn(${js(path)},${i})">${ic("add-chat", "i sm")}</button></div>`;
     if (t.role === "prompt") return `<div class="msg prompt"><div class="who">Prompt by ${esc(author)}</div>${acts}<div class="md">${md(t.text)}</div></div>`;
     return `<div class="msg reply ${isMe(author) ? "you" : ""}"><div class="who"><span class="ai" ${isMe(author) ? 'style="background:var(--peony)"' : ""}></span>${name} AI replied</div>${acts}<div class="md">${md(t.text)}</div></div>`;
   }).join("");
   const arts = (chat.artifacts || []).map((a) => {
     const id = "file:" + a.path; const nm = a.path.split("/").pop();
-    return `<span class="att" onclick="openItem('${attr(id)}')">${ic(KIND_ICON[kindOf(nm)] || "file", "i sm")}${esc(nm)}</span>`;
+    return `<span class="att" onclick="openItem(${js(id)})">${ic(KIND_ICON[kindOf(nm)] || "file", "i sm")}${esc(nm)}</span>`;
   }).join("");
   el.innerHTML = `<div class="pane-h">${picker || `${av(author)}<span class="title">${esc(chat.title)}</span>`}${meta.live ? '<span class="badge live">LIVE</span>' : `<span class="badge">${ago(chat.last_activity)} ago</span>`}
       <div class="grow"></div>
-      <button class="ib" data-tip="Copy whole chat" onclick="copyChat('${attr(path)}')">${ic("copy")}</button>
+      <button class="ib" data-tip="Copy whole chat" onclick="copyChat(${js(path)})">${ic("copy")}</button>
       <a class="ib" data-tip="View original" href="${attr(api("original?path=" + encodeURIComponent(chat.raw || "")))}" target="_blank" rel="noopener">${ic("file")}</a>
-      <button class="tonal" onclick="draftChat('${attr(path)}')">${ic("add-chat", "i sm")}Continue in my chat</button>
+      <button class="tonal" onclick="draftChat(${js(path)})">${ic("add-chat", "i sm")}Continue in my chat</button>
     </div>
     <div class="thread">${turns || '<div class="loading">This chat has no messages yet.</div>'}
     ${arts ? `<div class="msg reply" style="margin-left:0"><div class="who">Files from this chat</div>${arts}</div>` : ""}</div>`;
@@ -576,8 +579,8 @@ async function fillItem(el, it) {
   el.innerHTML = `<div class="pane-h">${ic(typeIcon(it))}<span class="title">${esc(it.title)}</span><span class="badge ${it.kind === "code" ? "code" : ""}">${esc((it.type === "work" ? "repo" : it.type).toUpperCase())}</span><div class="grow"></div>
       ${["image", "media"].includes(it.kind) ? "" : `<button class="ib" data-tip="Copy contents" onclick="copyText(document.getElementById('file-text').textContent,'Copied.')">${ic("copy")}</button>`}
       <a class="ib" data-tip="Download" href="${attr(api("download?path=" + encodeURIComponent(it.path)))}">${ic("download")}</a>
-      <button class="tonal" onclick="draftFile('${attr(it.id)}')">${ic("add-chat", "i sm")}Add to my chat</button></div>
-    <div class="detail"><div class="meta-line">${av(it.who)}${esc(it.who)} &middot; ${ago(it.when)} ago &middot; <code>${esc(it.path)}</code>${chatLink ? ` &middot; made in <a href="#" class="plain" onclick="openItem('chat:${attr(chatLink.path)}');return false">${esc(chatLink.title)}</a>` : ""}</div>${body}</div>`;
+      <button class="tonal" onclick="draftFile(${js(it.id)})">${ic("add-chat", "i sm")}Add to my chat</button></div>
+    <div class="detail"><div class="meta-line">${av(it.who)}${esc(it.who)} &middot; ${ago(it.when)} ago &middot; <code>${esc(it.path)}</code>${chatLink ? ` &middot; made in <a href="#" class="plain" onclick="openItem(${js("chat:" + chatLink.path)});return false">${esc(chatLink.title)}</a>` : ""}</div>${body}</div>`;
   if (!["image", "media"].includes(it.kind)) {
     const r = await fetch(url); const text = await r.text();
     const target = document.getElementById("file-text");
@@ -635,21 +638,27 @@ function toggleSec(k) { S.closed.has(k) ? S.closed.delete(k) : S.closed.add(k); 
 function toggleMenu() {
   const m = document.getElementById("menu");
   if (m.classList.toggle("open")) {
-    const projects = S.projects.map((p) => `<div class="mi" onclick="switchProject('${attr(p.slug)}')">${ic("folder", "i sm")}${esc(p.name)}<small>${esc(p.repo.split("/")[0])}</small></div>`).join("");
-    const inv = S.invitations.map((i) => `<div class="mi" onclick="join('${attr(i.repo)}', ${i.invitation_id || 0})">${ic("person-add", "i sm")}${esc(i.repo.split("/")[1].replace(/^pp-/, ""))}<small>${i.pending ? "invite from " : "from "}${esc(i.from)}</small></div>`).join("");
-    m.innerHTML = `<div class="mh">Your projects</div>${projects || '<div class="empty">None yet.</div>'}
-      ${inv ? `<div class="sepline"></div><div class="mh">Join</div>${inv}` : ""}
-      <div class="sepline"></div><div class="mi" onclick="toggleMenu();openDlg('new')">${ic("add-chat", "i sm")}Start a project</div>
-      <div class="mi" onclick="location.href='/guide'">${ic("file", "i sm")}How to pair up</div>`;
-    refreshInvitations().then(() => { if (m.classList.contains("open")) { m.classList.remove("open"); toggleMenu(); } });
+    renderMenu();
+    // Redraw once if fresh invitations arrive; a throttled (skipped) refresh must not redraw, or it loops forever.
+    refreshInvitations().then((fetched) => { if (fetched && m.classList.contains("open")) renderMenu(); });
   }
+}
+function renderMenu() {
+  const m = document.getElementById("menu");
+  const projects = S.projects.map((p) => `<div class="mi" onclick="switchProject(${js(p.slug)})">${ic("folder", "i sm")}${esc(p.name)}<small>${esc(p.repo.split("/")[0])}</small></div>`).join("");
+  const inv = S.invitations.map((i) => `<div class="mi" onclick="join(${js(i.repo)}, ${Number(i.invitation_id) || 0})">${ic("person-add", "i sm")}${esc(i.repo.split("/")[1].replace(/^pp-/, ""))}<small>${i.pending ? "invite from " : "from "}${esc(i.from)}</small></div>`).join("");
+  m.innerHTML = `<div class="mh">Your projects</div>${projects || '<div class="empty">None yet.</div>'}
+    ${inv ? `<div class="sepline"></div><div class="mh">Join</div>${inv}` : ""}
+    <div class="sepline"></div><div class="mi" onclick="toggleMenu();openDlg('new')">${ic("add-chat", "i sm")}Start a project</div>
+    <div class="mi" onclick="location.href='/guide'">${ic("file", "i sm")}How to pair up</div>`;
 }
 document.addEventListener("click", (e) => { const m = document.getElementById("menu"); if (m.classList.contains("open") && !m.contains(e.target) && !document.getElementById("proj-btn").contains(e.target)) m.classList.remove("open"); });
 let invitationsLoaded = 0;
 async function refreshInvitations() {
-  if (Date.now() - invitationsLoaded < 30000) return;
+  if (Date.now() - invitationsLoaded < 30000) return false;
   invitationsLoaded = Date.now();
   try { S.invitations = (await call("GET", "/api/invitations")).invitations; } catch { S.invitations = []; }
+  return true;
 }
 async function switchProject(slug) {
   document.getElementById("menu").classList.remove("open");
@@ -712,7 +721,7 @@ function renderMembers() {
   const iAmOwner = owner && isMe(owner.login);
   document.getElementById("members-sup").textContent = `Only these people can see this project. ${S.members.length} of 10.`;
   document.getElementById("members-list").innerHTML = S.members.map((m) => `<div class="li">${av(m.login, "av md")}<div class="grow">${esc(m.login)}${isMe(m.login) ? " (you)" : ""}<small>${m.owner ? "Started this project" : m.pending ? "Invite pending" : "Member"}</small></div>
-    ${iAmOwner && !m.owner ? `<button class="tbtn" onclick="removeMember('${attr(m.login)}', ${m.invitation_id || 0})">${m.pending ? "Cancel invite" : "Remove"}</button>` : ""}</div>`).join("");
+    ${iAmOwner && !m.owner ? `<button class="tbtn" onclick="removeMember(${js(m.login)}, ${Number(m.invitation_id) || 0})">${m.pending ? "Cancel invite" : "Remove"}</button>` : ""}</div>`).join("");
 }
 async function invite() {
   const input = document.getElementById("invite-login");
@@ -735,7 +744,7 @@ async function shareTab(mode) {
     const { chats } = await call("GET", "/api/my-chats");
     const shared = new Set(S.state.shared_chats);
     body.innerHTML = chats.map((c) => `<label class="ck"><input type="checkbox" value="${attr(c.id)}" ${shared.has(c.id) ? "checked disabled" : ""}> <span style="flex:1">${esc(c.title)}</span>
-      ${shared.has(c.id) ? `<button class="tbtn" onclick="event.preventDefault();unshare('${attr(c.id)}')">Stop sharing</button>` : `<span style="color:var(--muted);font:500 11px var(--mono)">${ago(c.last_activity)}</span>`}</label>`).join("") || '<div class="empty">No chats yet.</div>';
+      ${shared.has(c.id) ? `<button class="tbtn" onclick="event.preventDefault();unshare(${js(c.id)})">Stop sharing</button>` : `<span style="color:var(--muted);font:500 11px var(--mono)">${ago(c.last_activity)}</span>`}</label>`).join("") || '<div class="empty">No chats yet.</div>';
   } else if (mode === "files") {
     body.innerHTML = `<div class="tf"><input id="wf-q" placeholder="Search files in your workspace" oninput="searchFiles()"></div><div id="wf-results"></div>`;
     searchFiles();
