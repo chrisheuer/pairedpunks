@@ -4,6 +4,8 @@
 
 # PairedPunks
 
+> **Requires Imbue Studio (beta).** PairedPunks only runs inside an Imbue Studio workspace, and Studio is still in beta. It is not a standalone app and won't run on its own from this code. You and every partner need your own Studio workspace and a GitHub account.
+
 <p align="center">
   <a href="https://studio.imbue.com/open?git_url=https://github.com/chrisheuer/pairedpunks"><img alt="Open in Imbue Studio" height="64" src="https://img.shields.io/badge/Open%20in%20Imbue%20Studio-D8D1C0?style=for-the-badge"></a>
 </p>
@@ -19,7 +21,7 @@ At a hackathon every partner ends up with their own AI chats, prompts and genera
 
 ## How to use it
 
-You and each partner need an Imbue Studio workspace and a GitHub account. The full guide is also inside the app.
+You and each partner need an Imbue Studio (beta) workspace and a GitHub account. The full guide is also inside the app.
 
 **Everyone, once:**
 

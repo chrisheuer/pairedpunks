@@ -2,7 +2,7 @@
 title: "PairedPunks"
 description: "Private shared project spaces for hackathon partners: share AI chats, prompts, replies and files with up to 10 people, kept in sync through a private GitHub project."
 thumbnail: "template.svg"
-version: v2
+version: v3
 format: v2
 ---
 
@@ -18,7 +18,7 @@ follow "How to adapt it" below.
 
 Private shared project spaces for hackathon partners: share AI chats, prompts, replies and files with up to 10 people, kept in sync through a private GitHub project.
 
-PairedPunks gives a hackathon team of 2 to 10 people one private shared space for the AI work they do separately. Each member runs the PairedPunks window in their own Imbue Studio workspace; from it they share their Studio chats (every prompt and reply, the files the agent wrote, and the raw transcript), workspace files and uploads into a project that everyone on the team sees. The window shows the member's own embedded chat as the first tab and one tab per partner with that partner's shared chats, a sidebar that groups chats, artifacts and files by type, by person, or as the project's folder tree, and a side-by-side view. Any prompt or reply can be copied, or added as a draft to the member's own chat to build on. Behind the scenes each project is a private GitHub repository (named `pp-<project-slug>`) owned by the member who started it, with the partners invited as collaborators; the app commits and syncs it for them, so nobody has to touch git.
+PairedPunks gives a hackathon team of 2 to 10 people one private shared space for the AI work they do separately. Each member runs the PairedPunks window in their own Imbue Studio workspace; from it they share their Studio chats (every prompt and reply, the files the agent wrote, and the raw transcript), workspace files and uploads into a project that everyone on the team sees. The window shows the member's own embedded chat as the first tab and one tab per partner with that partner's shared chats, a sidebar that groups chats, artifacts and files by type, by person, or as the project's folder tree, and a side-by-side view. Any prompt or reply can be copied, or added as a draft to the member's own chat to build on. Behind the scenes each project is a private GitHub repository (named `pp-<project-slug>`) owned by the member who started it, with the partners invited as collaborators; the app commits and syncs it for them, so nobody has to touch git. It requires Imbue Studio, which is currently in beta: it only runs inside a Studio workspace, and every partner needs their own.
 
 ## How it works
 
@@ -129,6 +129,8 @@ This is distinct from "Adaptation history" below, which is the ADOPTERS' log.
 ### v1 (2026-10-09) -- first release: the PairedPunks app (private shared projects for 2-10 hackathon partners, synced through private GitHub repositories) and its supervisord program.
 
 ### v2 (2026-10-09) -- Safety fixes for partner-shared content (crafted file names, links committed by a partner, sandboxed file views), retry when a partner is syncing at the same moment, and a fix for the project menu freezing.
+
+### v3 (2026-10-09) -- notes that PairedPunks requires the Imbue Studio beta
 
 ## Adaptation history
 
