@@ -13,5 +13,5 @@ stop_when_no_windows = true
 # How update-app boots a throwaway preview of this app: on a free port, over a
 # scratch copy of its data (see .agents/skills/update-app/scripts/preview_app.py).
 [preview]
-env = {PAIRED_PUNKS_PORT = "{port:main}", PAIRED_PUNKS_HOST = "{host}", PAIRED_PUNKS_DATA_DIR = "{copy:data}"}
+env = {PAIRED_PUNKS_PORT = "{port:main}", PAIRED_PUNKS_HOST = "{host}", PAIRED_PUNKS_DATA_DIR = "{copy:data}", PYTHONPATH = "system/apps/paired_punks/src"}
 copies = {data = "data/.apps/paired-punks"}

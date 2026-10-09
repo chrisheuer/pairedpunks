@@ -10,7 +10,7 @@ slug = "pairedpunks"
 title = "PairedPunks"
 description = "Private shared project spaces for hackathon partners: share AI chats, prompts, replies and files with up to 10 people, kept in sync through a private GitHub project."
 thumbnail = "template.svg"
-version = "v3"
+version = "v4"
 
 # How this template is DERIVED from the workspace it came from. An
 # update re-runs this recipe rather than diffing two repos, which is what
@@ -46,8 +46,13 @@ modification_rules = []
 #   adaptation = worked through INTERACTIVELY with the user afterwards.
 #   Prose on both sides, so it is not cross-checked.
 
-# No secrets, and no LLM access: the app does not call a model.
+# No secrets. LLM access: Catch me up (summarize.py) calls Claude through
+# the keyless claude -p path.
 [requirements]
+
+[requirements.llm]
+method = "keyless"
+note = "Catch me up runs claude -p with claude-haiku-4-5 and no tools (about $0.03 per new summary); on the keyed litellm path (ANTHROPIC_API_KEY), switch the call in summarize.py per the use-ai-integration skill"
 
 [[requirements.permission]]
 scope = "github-rest-api"
@@ -74,8 +79,8 @@ scope = "github-git"
 permission = "github-git-write"
 
 [[requirements.adaptation]]
-summary = "no automatic chat monitoring: chats reach partners only when shared and then on each sync; nothing watches for updates (planned for v2)"
-resolution = "decide whether sync-while-open is enough, or add a background watcher that publishes chat updates"
+summary = "no background chat monitoring: chats reach partners only when shared and then on each sync; partners get in-window alerts only while the window is open (a background watcher is still planned, GitHub issues #1 and #3)"
+resolution = "decide whether alerts-while-open is enough, or add a background watcher that publishes chat updates"
 
 [[requirements.adaptation]]
 summary = "sync conflicts are not resolved: when two members' changes touch the same file the merge is aborted and the sync stops with a message"
@@ -99,8 +104,8 @@ resolution = "point ONBOARDING.md at the adopter's own copy if they publish or f
 # environment. The other sources are not snapshot-pinned, so for them the
 # recorded version IS the pin (name = version).
 #
-# Nothing extra: the app shells out only to git and latchkey, both stock
-# in the workspace image.
+# Nothing extra: the app shells out only to git, latchkey and claude, all
+# stock in the workspace image.
 #
 # For an install with no package database (a URL-fetched binary, a browser),
 # ship a system/scripts/env.d/<NNNN>-<slug>-<name>.sh unit with NNNN >= 2000,

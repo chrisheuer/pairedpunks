@@ -43,7 +43,7 @@ from typing import Any
 from flask import Flask, Response, abort, jsonify, request, send_file
 from werkzeug.serving import run_simple
 
-from paired_punks import transcripts
+from paired_punks import summarize, transcripts
 from paired_punks.github import GitHubError
 from paired_punks.projects import MAX_MEMBERS, Store
 from paired_punks.projects import _kind as _file_kind
@@ -260,6 +260,11 @@ def api_sync(slug: str) -> Response:
     return jsonify(STORE.sync(slug))
 
 
+@app.post("/api/projects/<slug>/make-private")
+def api_make_private(slug: str) -> Response:
+    return jsonify(STORE.make_private(slug))
+
+
 @app.get("/api/my-chats")
 def api_my_chats() -> Response:
     return jsonify({"chats": transcripts.list_my_chats()})
@@ -318,6 +323,16 @@ def api_chat(slug: str) -> Response:
 
 
 _TEXT_KINDS = {"code", "data", "file"}
+
+
+@app.post("/api/projects/<slug>/catch-up")
+def api_catch_up(slug: str) -> Response:
+    """A short Claude-written catch-up on a shared chat, kept per chat version."""
+    STORE.project(slug)
+    chat = STORE.chat(slug, str(_body().get("path", "")))
+    if not chat:
+        raise GitHubError("That chat isn't in this project.")
+    return jsonify(summarize.summarize(chat, DATA_DIR / "summaries" / slug))
 
 
 @app.get("/api/projects/<slug>/file")

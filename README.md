@@ -43,6 +43,9 @@ You and each partner need an Imbue Studio (beta) workspace and a GitHub account.
 - Hover any prompt or reply to **copy** it or **add it to your chat** as a draft.
 - **Sync** (the circling arrows) pulls in your partners' latest; it also runs every 2 minutes while the window is open.
 - **Clone to my computer** downloads the whole project.
+- **Privacy warning**: if the project's GitHub repository ever stops being private, a warning bar appears with a one-click **Make it private** (for the member who started the project; partners are told who to ask).
+- **Partner alerts**: while the window is open, an alert pops up when a partner shares or adds to a chat or file, new items get a NEW tag in the sidebar, and the window title shows how many you have not seen.
+- **Catch me up** on a partner's chat has Claude write a short summary of it above the chat (about $0.03 per new summary on your Claude account).
 
 Chats can contain passwords or private details -- only share the ones you are happy for every member to read.
 

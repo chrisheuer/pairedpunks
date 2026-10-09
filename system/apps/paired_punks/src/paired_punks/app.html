@@ -185,6 +185,20 @@
   .namecard .handle { font: italic 900 24px var(--display); line-height: 1.1; }
   .namecard small { display: block; color: var(--navy); font-size: 12px; }
   a.plain { color: var(--ivy); font-weight: 700; text-decoration: none; border-bottom: 2px solid var(--peony); }
+  .privacy-warn { flex: none; display: flex; align-items: center; gap: 10px; padding: 9px 14px 7px; margin-top: 7px; background: var(--peony); color: var(--navy); border-bottom: 2px solid var(--navy); font-weight: 700; }
+  .privacy-warn span { flex: 1; }
+  .alerts { position: fixed; bottom: 14px; right: 14px; width: 330px; display: flex; flex-direction: column; gap: 8px; z-index: 35; }
+  .alert { background: var(--cream); border: 2px solid var(--navy); box-shadow: 4px 4px 0 var(--navy); padding: 9px 10px 9px 12px; display: flex; align-items: flex-start; gap: 9px; }
+  .alert .txt { flex: 1; min-width: 0; }
+  .alert .txt b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .alert .txt small { color: var(--muted); }
+  .alert .row-acts { display: flex; gap: 4px; margin-top: 6px; }
+  .alerts .more { align-self: flex-end; }
+  .new-tag { font: 10px var(--badge); background: var(--peony); color: var(--navy); border-radius: 4px; padding: 0 5px; flex: none; }
+  .row.on .new-tag { color: var(--navy); }
+  .catchup { border: 2px solid var(--navy); background: var(--blush); box-shadow: 4px 4px 0 var(--ivy); padding: 10px 14px; }
+  .catchup .who { font: 800 11px var(--stencil); letter-spacing: 2px; text-transform: uppercase; display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+  .catchup small { color: var(--muted); display: block; margin-top: 6px; font-size: 11px; }
 </style>
 </head>
 <body>
@@ -225,6 +239,8 @@
   </span>
 </header>
 <div class="menu" id="menu"></div>
+<div class="privacy-warn" id="privacy-warn" style="display:none"></div>
+<div class="alerts" id="alerts"></div>
 
 <main id="main"></main>
 
@@ -279,6 +295,7 @@ const S = {
   projects: [], slug: localStorage.getItem("pp-slug") || "", state: null, members: [], invitations: [],
   nav: localStorage.getItem("pp-nav") || "type", active: "mine", open: [], partnerChat: {}, closed: new Set(),
   myChatPath: "/", shareMode: "chats", syncing: false, chatCache: {}, user: null, userError: "",
+  seen: null, alerts: [], catchups: {},
 };
 const ic = (n, cls = "i") => `<svg class="${cls}"><use href="#i-${n}"/></svg>`;
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -343,6 +360,7 @@ function render() {
   document.getElementById("proj-event").innerHTML = p && p.event ? "&nbsp;&middot; " + esc(p.event) : "";
   document.getElementById("project-actions").style.display = p ? "" : "none";
   document.getElementById("sync-chip").style.display = p ? "" : "none";
+  renderPrivacy(p);
   if (!p) { main.innerHTML = welcome(); return; }
   if (!S.state) { main.innerHTML = '<div class="loading">Opening the project...</div>'; return; }
   if (!main.querySelector("aside")) {
@@ -353,6 +371,25 @@ function render() {
       <section class="work"><div class="tabs" id="tabs"></div><div class="pane-wrap" id="panes"></div></section>`;
   }
   renderNav(); renderFoot(); renderTabs(); renderPanes();
+}
+
+// A project must stay private on GitHub: a public one shows every shared chat and file to anyone.
+function renderPrivacy(p) {
+  const el = document.getElementById("privacy-warn");
+  if (!p || p.private !== false) { el.style.display = "none"; return; }
+  el.style.display = "";
+  const owner = p.repo.split("/")[0];
+  el.innerHTML = `<span>This project is public on GitHub: anyone can see its shared chats and files.</span>` +
+    (p.can_change_visibility ? `<button class="fbtn" id="make-private" onclick="makePrivate()">Make it private</button>`
+      : `<span style="flex:none;font-weight:400">Ask ${esc(owner)}, who started it, to make it private.</span>`);
+}
+async function makePrivate() {
+  const btn = document.getElementById("make-private"); if (btn) { btn.disabled = true; btn.textContent = "Making it private..."; }
+  try {
+    const p = await call("POST", api("make-private"));
+    S.projects = S.projects.map((x) => (x.slug === p.slug ? p : x));
+    render(); snack(p.private ? "Done. Only members can see this project now." : "GitHub still shows it as public. Try again.");
+  } catch (e) { snack(e.message); if (btn) { btn.disabled = false; btn.textContent = "Make it private"; } }
 }
 
 function welcome() {
@@ -384,7 +421,7 @@ function row(it, opts = {}) {
   const on = S.active === it.id || (it.type === "chat" && S.active === "p:" + it.who && S.partnerChat[it.who] === it.path);
   const live = it.live ? `<span class="dot live ${isMe(it.who) ? "" : "them"}"></span>` : "";
   return `<div class="row ${on ? "on" : ""} ${quiet(it.when) && !it.live ? "quiet" : ""} ${it.kind === "code" ? "code" : ""} ${opts.indent || ""}" onclick="openItem(${js(it.id)})" title="${attr(it.title)}">
-    ${ic(typeIcon(it))}<span class="t">${esc(it.title)}</span>${live}<span class="m">${ago(it.when)}</span>${opts.noWho ? "" : av(it.who)}</div>`;
+    ${ic(typeIcon(it))}<span class="t">${esc(it.title)}</span>${isUnseen(it.id) ? '<span class="new-tag">NEW</span>' : ""}${live}<span class="m">${ago(it.when)}</span>${opts.noWho ? "" : av(it.who)}</div>`;
 }
 function section(key, label, inner, count) {
   return `<div class="sec ${S.closed.has(key) ? "closed" : ""}"><div class="sec-h" onclick="toggleSec('${key}')">${ic("chev", "i sm chev")}${label}<span class="cnt">${count}</span></div><div class="sec-b">${inner || '<div class="empty">Nothing yet.</div>'}</div></div>`;
@@ -516,6 +553,7 @@ function fillPartner(el, login, inSplit = false) {
   if (!chats.length) { el.innerHTML = `<div class="loading">${esc(login)} hasn't shared a chat yet.</div>`; return; }
   const cur = chats.find((c) => c.path === S.partnerChat[login]) || chats[0];
   S.partnerChat[login] = cur.path;
+  if (isUnseen("chat:" + cur.path)) setTimeout(() => markSeen("chat:" + cur.path), 0);
   const opts = chats.map((c) => `<option value="${attr(c.path)}" ${c.path === cur.path ? "selected" : ""}>${esc(c.title)}${c.live ? " (live)" : ""}</option>`).join("");
   const who = inSplit && partners().length > 1
     ? `<select onchange="S.splitWith=this.value;renderPanes()">${partners().map((p) => `<option ${p === login ? "selected" : ""}>${esc(p)}</option>`).join("")}</select>` : av(login);
@@ -552,11 +590,12 @@ async function fillChat(el, path, author, picker) {
   }).join("");
   el.innerHTML = `<div class="pane-h">${picker || `${av(author)}<span class="title">${esc(chat.title)}</span>`}${meta.live ? '<span class="badge live">LIVE</span>' : `<span class="badge">${ago(chat.last_activity)} ago</span>`}
       <div class="grow"></div>
+      ${isMe(author) ? "" : `<button class="tonal" onclick="catchUp(${js("chat:" + path)})">Catch me up</button>`}
       <button class="ib" data-tip="Copy whole chat" onclick="copyChat(${js(path)})">${ic("copy")}</button>
       <a class="ib" data-tip="View original" href="${attr(api("original?path=" + encodeURIComponent(chat.raw || "")))}" target="_blank" rel="noopener">${ic("file")}</a>
       <button class="tonal" onclick="draftChat(${js(path)})">${ic("add-chat", "i sm")}Continue in my chat</button>
     </div>
-    <div class="thread">${turns || '<div class="loading">This chat has no messages yet.</div>'}
+    <div class="thread">${catchupHtml(path)}${turns || '<div class="loading">This chat has no messages yet.</div>'}
     ${arts ? `<div class="msg reply" style="margin-left:0"><div class="who">Files from this chat</div>${arts}</div>` : ""}</div>`;
 }
 function kindOf(name) {
@@ -622,9 +661,77 @@ async function draft(text) {
   } catch (e) { copyText(text, "Copied instead: " + e.message); }
 }
 
+// ---------- partner alerts ----------
+// What a partner has shared, as id -> version. A version that differs from the one last seen is new to you.
+function partnerVersions() {
+  const out = {};
+  for (const it of items()) {
+    if (!it.who || isMe(it.who)) continue;
+    const chat = it.type === "chat" ? S.state.chats.find((c) => c.path === it.path) : null;
+    out[it.id] = chat ? `${chat.last_activity || ""}|${chat.turns}` : String(it.when || "");
+  }
+  return out;
+}
+const seenKey = () => "pp-seen-" + S.slug;
+function loadSeen() { try { return JSON.parse(localStorage.getItem(seenKey()) || "null"); } catch { return null; } }
+function saveSeen() { localStorage.setItem(seenKey(), JSON.stringify(S.seen)); }
+const isUnseen = (id) => !!S.seen && id in (S.versions || {}) && S.seen[id] !== S.versions[id];
+function markSeen(id) {
+  if (!S.seen || !(id in (S.versions || {})) || S.seen[id] === S.versions[id]) return;
+  S.seen[id] = S.versions[id]; saveSeen();
+  S.alerts = S.alerts.filter((a) => a.id !== id);
+  renderAlerts(); if (document.getElementById("nav")) renderNav();
+}
+function markAllSeen() { S.seen = { ...S.versions }; saveSeen(); S.alerts = []; renderAlerts(); renderNav(); }
+// After each load: alert on anything a partner shared or changed since you last looked.
+function checkPartnerUpdates() {
+  S.versions = partnerVersions();
+  S.seen = S.seen || loadSeen();
+  if (!S.seen) { S.seen = { ...S.versions }; saveSeen(); }  // first visit: what's there already isn't news
+  for (const id of Object.keys(S.versions)) {
+    if (S.seen[id] === S.versions[id] || S.alerts.some((a) => a.id === id && a.version === S.versions[id])) continue;
+    const it = byId(id); if (!it) continue;
+    const what = it.type === "chat" ? (id in S.seen ? "added to a chat" : "shared a chat") : it.type === "artifact" ? "made a file" : "shared a file";
+    S.alerts = S.alerts.filter((a) => a.id !== id);
+    if (it.type === "chat") delete S.catchups[it.path];  // the old catch-up no longer covers the chat
+    S.alerts.unshift({ id, version: S.versions[id], who: it.who, what, title: it.title, type: it.type });
+  }
+  S.alerts = S.alerts.filter((a) => isUnseen(a.id));
+  renderAlerts();
+}
+function renderAlerts() {
+  const el = document.getElementById("alerts");
+  const shown = S.alerts.slice(0, 3);
+  el.innerHTML = shown.map((a) => `<div class="alert">${av(a.who)}<div class="txt"><small>${esc(a.who)} ${esc(a.what)}</small><b title="${attr(a.title)}">${esc(a.title)}</b>
+      <div class="row-acts"><button class="fbtn" onclick="openItem(${js(a.id)})">Open</button>${a.type === "chat" ? `<button class="tonal" onclick="catchUp(${js(a.id)})">Catch me up</button>` : ""}</div></div>
+      <button class="ib sm" data-tip="Dismiss" onclick="markSeen(${js(a.id)})">${ic("close", "i sm")}</button></div>`).join("") +
+    (S.alerts.length ? `<button class="tbtn more" onclick="markAllSeen()">${S.alerts.length > 3 ? `${S.alerts.length - 3} more. ` : ""}Mark all seen</button>` : "");
+  const unseen = Object.keys(S.versions || {}).filter(isUnseen).length;
+  document.title = unseen ? `(${unseen}) PairedPunks` : "PairedPunks";
+}
+
+// ---------- catch-up summaries ----------
+function catchupHtml(path) {
+  const c = S.catchups[path]; if (!c) return "";
+  const body = c.loading ? '<div class="working">Reading the chat and writing your catch-up...</div>'
+    : c.error ? `<p>${esc(c.error)}</p>` : `<div class="md">${md(c.summary)}</div><small>Written by Claude from the chat below${c.cached ? "" : ` &middot; cost about $${Number(c.cost_usd || 0).toFixed(3)}`}. Check the chat for the details.</small>`;
+  return `<div class="catchup"><div class="who">${ic("chat", "i sm")}Catch-up</div>${body}</div>`;
+}
+async function catchUp(id) {
+  const it = byId(id); if (!it || it.type !== "chat") return;
+  openItem(id);
+  const path = it.path;
+  if (S.catchups[path] && !S.catchups[path].error) return renderPanes();
+  S.catchups[path] = { loading: true }; renderPanes();
+  try { S.catchups[path] = await call("POST", api("catch-up"), { path }); }
+  catch (e) { S.catchups[path] = { error: e.message }; }
+  if (S.active === id || S.active === "p:" + it.who || S.active === "split") renderPanes();
+}
+
 // ---------- navigation ----------
 function openItem(id) {
   const it = byId(id); if (!it) return;
+  markSeen(id);
   if (it.type === "chat" && !isMe(it.who)) { S.partnerChat[it.who] = it.path; S.active = "p:" + it.who; }
   else { if (!S.open.includes(id)) S.open.push(id); S.active = id; }
   renderNav(); renderTabs(); renderPanes();
@@ -664,6 +771,7 @@ async function switchProject(slug) {
   document.getElementById("menu").classList.remove("open");
   S.slug = slug; localStorage.setItem("pp-slug", slug);
   S.state = null; S.members = []; S.open = []; S.active = "mine"; S.chatCache = {}; S.partnerChat = {};
+  S.seen = null; S.versions = {}; S.alerts = []; S.catchups = {}; renderAlerts();
   document.getElementById("main").innerHTML = "";
   render(); await loadState(); syncNow(false);
 }
@@ -691,7 +799,7 @@ async function loadState() {
   try {
     const [st, mem] = await Promise.all([call("GET", api("state")), call("GET", api("members")).catch(() => ({ members: [] }))]);
     S.state = st; S.members = mem.members; S.chatCache = {};
-    render(); setSyncChip();
+    checkPartnerUpdates(); render(); setSyncChip();
   } catch (e) { snack(e.message); }
 }
 function setSyncChip(error) {
@@ -706,7 +814,7 @@ async function syncNow(announce) {
   try {
     const p = await call("POST", api("sync"));
     S.projects = S.projects.map((x) => (x.slug === p.slug ? p : x));
-    S.syncing = false; await loadState();
+    S.syncing = false; renderPrivacy(p); await loadState();
     if (announce) snack("Synced. You have your pair's latest.");
   } catch (e) { S.syncing = false; setSyncChip(e.message); if (announce) snack(e.message); }
 }

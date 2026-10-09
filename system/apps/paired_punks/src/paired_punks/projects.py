@@ -285,6 +285,28 @@ class Store:
             added.append(str(target.relative_to(repo)))
         return added
 
+    # ----- privacy -----
+    def check_privacy(self, slug: str) -> dict[str, Any]:
+        """Ask GitHub whether the project is still private, and remember the answer on the project record."""
+        project = self.project(slug)
+        info = api("GET", f"/repos/{project['repo']}") or {}
+        project["private"] = bool(info.get("private", True))
+        project["can_change_visibility"] = bool((info.get("permissions") or {}).get("admin"))
+        project["privacy_checked"] = _now()
+        self._save_project(project)
+        return project
+
+    def make_private(self, slug: str) -> dict[str, Any]:
+        project = self.project(slug)
+        try:
+            api("PATCH", f"/repos/{project['repo']}", {"private": True})
+        except GitHubError as error:
+            if "(403)" in str(error) or "(404)" in str(error):
+                owner = project["repo"].split("/")[0]
+                raise GitHubError(f"Only {owner}, who started this project, can make it private.") from error
+            raise
+        return self.check_privacy(slug)
+
     # ----- sync -----
     def sync(self, slug: str) -> dict[str, Any]:
         project = self.project(slug)
@@ -301,7 +323,10 @@ class Store:
             _exchange(repo, url)
         project["last_sync"] = _now()
         self._save_project(project)
-        return project
+        try:
+            return self.check_privacy(slug)
+        except GitHubError:
+            return project  # the sync itself worked; the privacy check runs again next time
 
     # ----- reading -----
     def state(self, slug: str) -> dict[str, Any]:

@@ -2,7 +2,7 @@
 title: "PairedPunks"
 description: "Private shared project spaces for hackathon partners: share AI chats, prompts, replies and files with up to 10 people, kept in sync through a private GitHub project."
 thumbnail: "template.svg"
-version: v3
+version: v4
 format: v2
 ---
 
@@ -37,9 +37,11 @@ from the original agent onto a clean default-workspace-template base):
 
 At runtime the shell starts the program when a PairedPunks window opens and stops it a minute after the last one closes (`stop_when_no_windows = true`). While the window is open the page asks the server to sync every 2 minutes (and on the Sync button): it commits the member's shared items into their folder of the project clone, fetches and merges partners' pushes, and pushes back. "Add to my chat" posts the text as a draft to the chat app's `/api/chats/intake` endpoint, found through the workspace's app registry. All state lives under `data/.apps/paired-punks/` (`PAIRED_PUNKS_DATA_DIR` overrides it); nothing else in the workspace is modified.
 
+Since v4, three features build on the sync. A privacy check: every sync asks GitHub whether the project repository is still private, and if not the window shows a warning bar with a one-click "Make it private" (only the project's owner can use it; partners are told who to ask). Partner alerts: while the window is open, an alert card appears when a partner shares or adds to a chat or file, new items get a NEW tag in the sidebar, and the window title shows the unseen count. Catch me up: a button on a partner's chat has Claude (`claude-haiku-4-5`, through the workspace's own `claude -p`, with no tools) write a short catch-up above the chat (`summarize.py`); summaries are cached per chat version under the app's data folder (`summaries/`), and each new one costs about $0.03 on the member's Claude account.
+
 ## Recipe
 
-This template is version `v1`. It is not a fork of the
+This template is version `v4`. It is not a fork of the
 workspace it came from -- it is DERIVED from it by a recipe: include these
 paths, leave these out, apply these published-version rules. An update re-runs
 the recipe against the current workspace and publishes the result as the next
@@ -72,11 +74,13 @@ Activation -- the app reaches GitHub only through latchkey, so the adopter must 
 - requires_permission: github-git / github-git-read (user-approved; adopting agent initiates during setup) -- git clone and fetch of the project repositories through the gateway's git proxy.
 - requires_permission: github-git / github-git-write (user-approved; adopting agent initiates during setup) -- git push of the member's shared items.
 
-There are no secrets to set, and the app does not call an LLM (no model access is needed).
+- requires_llm: Catch me up calls Claude (`claude-haiku-4-5`) via the keyless path -- the workspace's `claude -p`, billed to the member's Claude subscription, about $0.03 per new summary; an adopter on the keyed litellm path (`ANTHROPIC_API_KEY`) must switch the call in `summarize.py` per the use-ai-integration skill.
+
+There are no secrets to set.
 
 Adaptation -- things that do not work the way an adopter might expect and need a decision:
 
-- No automatic chat monitoring: a chat reaches partners only after the member shares it with the upload button, and later turns only travel on a sync (each sync re-exports the member's shared chats). Nothing watches chats for updates or tells partners something changed. A background watcher that publishes chat updates is planned for v2; until then, decide whether sync-while-open is enough.
+- No automatic chat monitoring: a chat reaches partners only after the member shares it with the upload button, and later turns only travel on a sync (each sync re-exports the member's shared chats). Nothing watches chats for updates or tells partners something changed. Since v4, partners get in-window alerts when a partner shares or adds to a chat or file, but only while the PairedPunks window is open; a background watcher for when the window is closed is still planned (GitHub issues #1 and #3).
 - Sync conflicts are not resolved: if a member's changes and a partner's pushed changes touch the same file, the merge is aborted and the sync stops with a message telling the member to sort it out on GitHub and sync again. Each member's chats and files go into their own folder of the project, so this only happens when two people edit the same file; agree on who owns which files, or add a resolution step.
 - "Live" status is approximate: a partner's chat shows as live when its transcript changed in the last 15 minutes, not from a real presence signal. Change `LIVE_WINDOW_SECONDS` in `transcripts.py` if a different threshold suits the team.
 - Sync runs only while a PairedPunks window is open (every 2 minutes) or when the member clicks Sync; with the window closed, nothing syncs. To sync in the background, set `stop_when_no_windows = false` in `app.toml` and add a server-side timer.
@@ -90,7 +94,7 @@ converges it at ITS OWN pinned apt snapshot timestamp, so package versions come
 out consistent with the rest of that agent's environment rather than frozen to
 whatever this publisher happened to have.
 
-Nothing extra -- runs on the stock workspace environment. The app shells out only to `git` and `latchkey`, both part of the stock workspace image, and its Python dependencies (Flask, Werkzeug) are declared in its own `pyproject.toml`; it is a uv workspace member (`system/apps/*`), so the workspace's normal `uv sync --all-packages` installs them.
+Nothing extra -- runs on the stock workspace environment. The app shells out only to `git`, `latchkey` and `claude`, all part of the stock workspace image, and its Python dependencies (Flask, Werkzeug) are declared in its own `pyproject.toml`; it is a uv workspace member (`system/apps/*`), so the workspace's normal `uv sync --all-packages` installs them.
 
 ## How to adapt it
 
@@ -131,6 +135,8 @@ This is distinct from "Adaptation history" below, which is the ADOPTERS' log.
 ### v2 (2026-10-09) -- Safety fixes for partner-shared content (crafted file names, links committed by a partner, sandboxed file views), retry when a partner is syncing at the same moment, and a fix for the project menu freezing.
 
 ### v3 (2026-10-09) -- notes that PairedPunks requires the Imbue Studio beta
+
+### v4 (2026-10-09) -- privacy check on every sync, partner alerts, Catch me up summaries; lockfile and wording fixes
 
 ## Adaptation history
 
